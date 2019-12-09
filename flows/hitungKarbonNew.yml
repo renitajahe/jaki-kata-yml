@@ -1,0 +1,261 @@
+volatile: true
+invalidate: 1520539256476
+active: true
+intents:
+    fiturJejakByCarousel:
+        initial: true
+        priority: 7
+        type: data
+        condition: payload.menu == "hitungDampak"
+    fiturJejakByTyping:
+        initial: true
+        priority: 7
+        type: text
+        classifier:
+            nlu: main
+            expression: "main == 'hitungDampak'"
+    getKM:
+        priority: 3
+        type: text
+        classifier:
+            nlu: numberFourDigit
+        attributes:
+            jumlah:
+                nlu: numberFourDigit
+    yes:
+        priority: 2
+        type: text
+        classifier:
+            nlu: yesno
+            expression: "yesno == 'yes'"
+    no:
+        priority: 2
+        type: text
+        classifier:
+            nlu: yesno
+            expression: "yesno == 'no'"
+    yesButton:
+        priority: 2
+        type: data
+        condition: payload.ya == "ya"
+    noButton:
+        priority: 2
+        type: data
+        condition: payload.tidak == "nggak"
+    getApi:
+        priority: 2
+        type: command
+        condition: content == "getApi"
+    idle:
+        priority: 2
+        type: command
+        condition: content == "userIdle"
+
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            hitungDampak:
+                condition: 'intent == "fiturJejakByCarousel" || intent == "fiturJejakByTyping"'
+            init:
+                fallback: true
+    hitungDampak:
+        enter: parseTime
+        action: 
+            - name: askKendaraan
+            - name: userIdle
+        transitions:
+            askCc:
+                condition: 'intent == "yesButton" || intent == "yes"'
+            noKendaraan:
+                condition: 'intent == "noButton" || intent == "no"'
+            hitungDampak:
+                fallback: true
+    askCc:
+        enter: parseTime
+        action: 
+            -   name: invalidCc
+                condition: 'intent == "getApi"'
+            -   name: askCc
+            -   name: userIdle
+        transitions:
+            callApiValidateCc:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.CCMesin: attributes.jumlah
+            askCc:
+                fallback: true
+    callApiValidateCc:
+        action: 
+            -   name: callApiValidateCc
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            askJarak:
+                condition: intent == "getApi" && payload.result
+                mapping:
+                    context.result: payload.result
+            askCc:
+                condition: intent == "getApi" && !payload.result
+                fallback: true
+    askJarak:
+        enter: parseTime
+        action: 
+            - name: askJarak
+            - name: userIdle
+        transitions:
+            callApiJejak:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.distance: attributes.jumlah
+            askJarak:
+                fallback: true
+    callApiJejak:
+        action: 
+            -   name: callApiJejak
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            result:
+                condition: intent == "getApi" && payload.result
+                mapping:
+                    context.result: payload.result.data
+            validateFailed:
+                condition: intent == "getApi" && !payload.result
+                # fallback: true
+    result:
+        enter: roundDecimal
+        action: 
+            - name: result
+            - name: goToConfirm
+        end: true
+    validateFailed:
+        action: validateFailed
+        end: true
+    noKendaraan:
+        action: noKendaraan
+        end: true
+    idle:
+        action:
+            -   name: removeUserIdle
+            -   name: timeoutMessage
+        float:
+            priority: 10
+            condition: "intent == 'idle'"
+        end: true
+
+actions:
+    goToConfirm:
+        type: command
+        options:
+            command: goToConfirm
+    askKendaraan:
+        type: template
+        options:
+            type: button
+            items:
+                text: Apakah kamu sehari-hari menggunakan kendaraan?
+                actions:
+                    -
+                        type: postback
+                        label: Ya
+                        text: Ya
+                        payload:
+                            ya: ya
+                    -
+                        type: postback
+                        label: Nggak
+                        text: Nggak
+                        payload:
+                            tidak: nggak
+    invalidCc:
+        type: text
+        options:
+            text: Maaf cc mesin yang kamu masukkan tidak ada dalam daftar kami. Silahkan masukkan kembali cc mesin kendaraan kamu yang benar.
+    askCc:
+        type: text
+        options:
+            text: Berapa cc mesin kendaraan yang kamu gunakan?
+    askJarak:
+        type: text
+        options:
+            text: Berapa jarak yang kamu tempuh (km) dalam sehari?
+    result:
+        type: text
+        options:
+            text: Baiklah, kalau jaki perkirakan kamu menghasilkan $(context.result) gram emisi karbon dalam per hari.
+    validateFailed:
+        type: text
+        options:
+            text: validate failed
+    noKendaraan:
+        type: text
+        options:
+            text: Wah sayang sekali Jaki gabisa bantu menghitung karbon kamu. Sapa jaki lain kali ya.
+    callApiValidateCc:
+        type: api
+        options:    
+            method: GET
+            headers:
+                Authorization: "Basic Yzk4ZDMwZGEtMjIzMy00MWQxLWE2ZjgtOTY1NzYxYTBmNWMyOg=="
+            uri: 'https://dev.jejak.in/footprint/calculate/cc?purchase=false&cc=$(context.CCMesin)&distance=1&unit=3' 
+    callApiJejak:
+        type: api
+        options:    
+            method: GET
+            headers:
+                Authorization: "Basic Yzk4ZDMwZGEtMjIzMy00MWQxLWE2ZjgtOTY1NzYxYTBmNWMyOg=="
+            uri: 'https://dev.jejak.in/footprint/calculate/cc?purchase=false&cc=$(context.CCMesin)&distance=$(context.distance)&unit=3'
+    timeoutMessage:
+        type: text
+        options:
+            text: "Terimakasih telah menyapa Jaki :)"
+    removeUserIdle:
+        type: schedule
+        options:
+            id: userIdle
+            command: remove
+    userIdle:
+        type: schedule
+        options:
+            id: userIdle
+            command: add
+            message:
+                type: command
+                content: userIdle
+            start: $(data.parsedTime)
+            end: $(data.parsedTimeEnd)
+            freqType: minutes
+            freqInterval: 5
+
+methods:
+    roundDecimal(ctx): "
+        var result = ctx.context.result;
+        ctx.context.result = Math.round(result);
+
+        return ctx;
+
+    "
+    parseTime(ctx): "
+        let date = new Date(ctx.context.$now + 300000);
+        let dateISO = date.toISOString();
+        let parsedDate = dateISO.split('T');
+        let parsedTime = parsedDate[1].split('.');
+        ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+
+        let dateEnd = new Date(ctx.context.$now + 300000);
+        let dateISOEnd = dateEnd.toISOString();
+        let parsedDateEnd = dateISOEnd.split('T');
+        let parsedTimeEnd = parsedDateEnd[1].split('.');
+        ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+        return ctx;
+    "

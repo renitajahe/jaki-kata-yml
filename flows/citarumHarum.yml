@@ -1,0 +1,210 @@
+volatile: true
+active: true
+invalidate: 1520539256476
+intents:
+    gotoCitarumHarum:
+        type: command
+        initial: true
+        condition: 'content == "gotoCitarumHarum"'
+    EventJejakInByImageMap:
+        initial: true
+        # priority: 5
+        condition:
+            - "content == 'Citarum Harum'"
+    yes:
+        type: data
+        initial: false
+        fallback: false
+        condition: 'payload.yesno == "yes"'
+    no:
+        type: data
+        initial: false
+        fallback: false
+        condition: 'payload.yesno == "no"'
+    citarumHarum:
+        type: data
+        initial: true
+        fallback: false
+        condition: 'payload.event == "citarumHarum"'
+    tentangCitarumHarum:
+        initial: true
+        priority: 7
+        condition:
+            - "content == 'Tentang' || content == 'Video Jejakin' || content == 'Foto Jejakin'"
+states:
+    #Citarum Harum
+    init:
+        enter: parseTime
+        initial: true
+        transitions:
+            citarumHarum:
+                condition: 'intent == "EventJejakInByImageMap" || intent == "gotoCitarumHarum"'
+            askBackToMenu:
+                condition: 'intent == "tentangCitarumHarum"'
+            init:
+                fallback: true
+    citarumHarum:
+        enter: parseTime
+        action:
+            # - name: introduction
+            - name: askAboutCitarumHarum
+            - name: imageMapMenu
+        transitions:
+            askBackToMenu:
+                condition: 'intent == "tentangCitarumHarum"'
+        citarumHarum:
+            fallback: true
+    askBackToMenu:
+        enter: parseTime
+        action:
+            -   name: fotoSungai
+                condition: 'content == "Tentang"'
+            -   name: tentang
+                condition: 'content == "Tentang"'
+            # -   name: video1
+            #     condition: 'content == "Video Jejakin"'
+            -   name: tellVideo
+                condition: 'content == "Video Jejakin"'
+            # -   name: video2
+            #     condition: 'content == "Video Jejakin"'
+            # -   name: video3
+            #     condition: 'content == "Video Jejakin"'
+            -   name: kegiatan
+                condition: 'content == "Foto Jejakin"'
+            -   name: foto1
+                condition: 'content == "Foto Jejakin"'
+            -   name: foto2
+                condition: 'content == "Foto Jejakin"'
+            -   name: foto3
+                condition: 'content == "Foto Jejakin"'
+            -   name: goToConfirm
+        end: true
+actions:
+    goToConfirm:
+        type: command
+        options:
+            command: goToConfirm
+    introduction:
+        type: text
+        options:
+            text: 'introduction tentang citarum harum belum ada'
+    tellVideo:
+        type: text
+        options:
+            text: 'Kamu bisa lihat video Jejakin di url berikut: // https://bit.ly/2Q6ii0v // https://bit.ly/2BHMnyh // https://bit.ly/2TdZ7E2'
+    askAboutCitarumHarum:
+        type: text
+        options:
+            text: 'Apa yang mau kamu tahu tentang Citarum Harum? Jaki bisa kasih tahu kamu lho.'
+    imageMapMenu:
+        type: template
+        options:
+            type: imagemap
+            #TODO need to adjust the coordinate
+            items:
+                altText: Pilih menu yang kamu inginkan
+                baseUrl: https://i.ibb.co/74P6vdN/11-100.jpg
+                baseSize:
+                    height: 1040
+                    width: 1040
+                actions:
+                    -   text: "Tentang"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 0
+                            width: 1040
+                            height: 346.667
+                    -   text: "Video Jejakin"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 346.667
+                            width: 1040
+                            height: 346.667
+                    -   text: "Foto Jejakin"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 693.334
+                            width: 1040
+                            height: 346.667
+    video1:
+        type: template
+        options:
+            type: video
+            items:
+                originalContentUrl: https://www.youtube.com/watch?v=eHpzZlduI4M&t=16s
+                previewImageUrl: https://www.youtube.com/watch?v=eHpzZlduI4M&t=16s
+    video2:
+        type: template
+        options:
+            type: video
+            items:
+                originalContentUrl: https://www.youtube.com/watch?v=jHdLB5q_-gQ
+                previewImageUrl: https://www.youtube.com/watch?v=jHdLB5q_-gQ
+    video3:
+        type: template
+        options:
+            type: video
+            items:
+                originalContentUrl: https://www.youtube.com/watch?v=hDdIfvZH8VM
+                previewImageUrl: https://www.youtube.com/watch?v=hDdIfvZH8VM
+    foto1:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/M61DjPy/Whats-App-Image-2018-12-26-at-21-55-23.jpg
+                previewImageUrl: https://i.ibb.co/M61DjPy/Whats-App-Image-2018-12-26-at-21-55-23.jpg
+    foto2:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/xjb37Wz/Whats-App-Image-2018-12-26-at-21-53-45.jpg
+                previewImageUrl: https://i.ibb.co/xjb37Wz/Whats-App-Image-2018-12-26-at-21-53-45.jpg
+    foto3:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/M75Smfd/Whats-App-Image-2018-12-26-at-21-51-29.jpg
+                previewImageUrl: https://i.ibb.co/M75Smfd/Whats-App-Image-2018-12-26-at-21-51-29.jpg
+    fotoSungai:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/SrCXsKC/Whats-App-Image-2018-12-27-at-20-42-58.jpg
+                previewImageUrl: https://i.ibb.co/SrCXsKC/Whats-App-Image-2018-12-27-at-20-42-58.jpg
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+    tentang:
+        type: text
+        options:
+            text: 'Sungai Citarum adalah sungai terpanjang dan terbesar di Propinsi Jawa Barat, dengan nilai sejarah, ekonomi, dan sosial yang sangat tinggi // Namun sayangnya sungai Citarum masuk kedalam daftar sungai terkotor di dunia. // Citarum Harum adalah program pemerintah untuk mengembalikan sungai Citarum sebagai sungai yang bersih // Jejakin juga ikut berkontribusi dalam pemulihan DAS Citarum. Saat ini masih di hulu (sektor 23), namun semoga dapat berkontribusi juga di sektor lainnya dengan bantuan perangkat iot.'
+    tujuan:
+        type: text
+        options:
+            text: 'Menggunakan teknologi, Jejakin ikut berkontribusi dalam pemulihan DAS Citarum, dengan membantu pengelolaan pohon di hulu Sungai Citarum // Berikut adalah beberapa video yang dapat kamu tonton untuk mendapatkan gambaran tentang apa yang Jejakin lakukan di Citarum saat ini'
+    kegiatan:
+        type: text
+        options:
+            text: 'Jejakin sangat senang karena dapat berkontribusi terhadap upaya pemulihan DAS Citarum, dengan menggunakan teknologi yang sesuai dengan kebutuhan di lapangan. // Berikut adalah beberapa foto yang dapat kamu lihat untuk mendapatkan gambaran tentang apa yang Jejakin lakukan di Citarum saat ini'
+methods:
+    parseTime(ctx): "
+        let date = new Date(ctx.context.$now + 300000);
+        let dateISO = date.toISOString();
+        let parsedDate = dateISO.split('T');
+        let parsedTime = parsedDate[1].split('.');
+        ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+        let dateEnd = new Date(ctx.context.$now + 360000);
+        let dateISOEnd = dateEnd.toISOString();
+        let parsedDateEnd = dateISOEnd.split('T');
+        let parsedTimeEnd = parsedDateEnd[1].split('.');
+        ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+        return ctx;
+    "

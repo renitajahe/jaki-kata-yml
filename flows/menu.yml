@@ -1,0 +1,141 @@
+volatile: true
+invalidate: 1520539256476
+active: true
+intents:
+    goToMenu:
+        type: command
+        initial: true
+        condition: 'content == "goToMenu"'
+states:
+    init:
+        enter: parseTime
+        initial: true
+        transitions:
+            menu:
+                condition: 'intent == "goToMenu"'
+            init:
+                fallback: true
+    menu:
+        enter: parseTime
+        action:
+            - name: ask
+            - name: carouselAboutJejak
+        end: true
+actions:
+    ask:
+        type: text
+        options:
+            text: "Kamu mau tahu tentang apa?"
+    # imagemapMenu:
+    #     type: template
+    #     options:
+    #         type: imagemap
+    #         #TODO need to adjust the coordinate
+    #         items:
+    #             altText: Pilih menu yang kamu inginkan
+    #             baseUrl: https://i.ibb.co/qsF9sC7/22-100.jpg
+    #             baseSize:
+    #                 height: 1040
+    #                 width: 1040
+    #             actions:
+    #                 -   text: "Tentang Jejakin"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 0
+    #                         width: 1040
+    #                         height: 260
+    #                 -   text: "Hitung Karbonku"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 260
+    #                         width: 1040
+    #                         height: 260
+    #                 -   text: "Kegiatan"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 520
+    #                         width: 1040
+    #                         height: 260
+    #                 -   text: "Citarum Harum"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 780
+    #                         width: 1040
+    #                         height: 260
+    carouselAboutJejak:
+        type: 'template'
+        options:
+            type: 'carousel'
+            items:
+                - 
+                    title: 'Apa Itu Jejakin'
+                    text: 'Kenal lebih jauh tentang Jejak.in'
+                    thumbnailImageUrl: 'https://jejak.in/assets/img/asset_web.svg'
+                    actions:
+                        - type: postback
+                          label: 'Pilih'
+                          payload:
+                              menu: aboutJejak
+                - 
+                    title: 'Hitung Dampak'
+                    text: 'Ayo hitung dampak kegiatan keseharianmu!'
+                    thumbnailImageUrl: 'https://jejak.in/assets/img/asset_1.svg'                    
+                    actions:
+                        - type: postback
+                          label: 'Pilih'
+                          payload:
+                              menu: hitungDampak
+    menuCarousel:
+        type: template
+        options:
+            type: carousel
+            items:
+                -
+                    text: Buat kamu yang ingin tau tentang Jejak.in
+                    title: Tentang Jejak.in
+                    thumbnailImageUrl: https://www.atmajaya.ac.id/imagecontent/teknobiologi-magister-savira-registrasi.jpg 
+                    actions:
+                        -
+                            type: postback
+                            label: Pilih
+                            payload:
+                                menu: aboutjejak
+                -
+                    text: Buat kamu yang ingin tau tentang Hari Pemulihan DAS
+                    title: Tentang Hari Pemulihan DAS
+                    thumbnailImageUrl: https://www.atmajaya.ac.id/imagecontent/teknobiologi-magister-savira-pindah-jurusan.jpg
+                    actions:
+                        -
+                            type: postback
+                            label: Pilih
+                            payload:
+                                menu: aboutdas
+                -
+                    text: $(config.botDisplayName) akan bantu kamu menghitung karbon
+                    title: Hitung Karbon
+                    thumbnailImageUrl: https://www.atmajaya.ac.id/imagecontent/teknobiologi-magister-savira-pindah-kampus.jpg 
+                    actions:
+                        -
+                            type: postback
+                            label: Pilih
+                            payload:
+                                menu: karbon
+methods:
+  parseTime(ctx): "
+    let date = new Date(ctx.context.$now + 300000);
+    let dateISO = date.toISOString();
+    let parsedDate = dateISO.split('T');
+    let parsedTime = parsedDate[1].split('.');
+    ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+
+    let dateEnd = new Date(ctx.context.$now + 360000);
+    let dateISOEnd = dateEnd.toISOString();
+    let parsedDateEnd = dateISOEnd.split('T');
+    let parsedTimeEnd = parsedDateEnd[1].split('.');
+    ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+    return ctx;
+  "

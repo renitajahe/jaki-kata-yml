@@ -1,0 +1,106 @@
+volatile: true
+invalidate: 1520539256476
+intents:
+    goToConfirm:
+        initial: true
+        type: command
+        condition: "content == 'goToConfirm'"
+    goToConfirmByPayload:
+        initial: true
+        type: data
+        condition: 'payload.goToConfirm'
+    goToConfirmByCancel:
+        initial: true
+        type: command
+        condition: "content == 'goToConfirmByCancel'"
+    yes:
+        type : text
+        classifier:
+            nlu: yesno
+            expression: "yesno == 'yes'"
+    no:
+        type : text
+        classifier:
+            nlu: yesno
+            expression: "yesno == 'no'"
+    yesButton:
+        type: data
+        condition: "payload.ya"
+        fallback: false
+    noButton:
+        type: data
+        condition: "payload.tidak"
+        fallback: false
+    # cancel:
+    #     type: command
+    #     priority: 4
+    #     initial: true
+    #     condition: 'content == "cancel"'
+states:
+    initConfirm:
+        enter: parseTime
+        initial: true
+        end: false
+        action:
+            -   name: askStillNeedHelp
+        transitions:
+            goToMenu:
+                condition: 'intent == "yesButton" || intent == "yes"'
+            goToThanks:
+                condition: 'intent == "noButton" || intent == "no"'
+            initConfirm:
+                fallback: true
+    goToMenu:
+        initial: false
+        end: true
+        action:
+            - name: goToMenu
+    goToThanks:
+        initial: false
+        end: true
+        action:
+            - name: goToThanks
+actions:
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+    goToThanks:
+        type: command
+        options:
+            command: goToThanks
+    askStillNeedHelp:
+        type: template
+        options:
+            type: button
+            items:
+                title: Konfirmasi
+                text: "Masih mau tahu yang lainnya?"
+                actions:
+                    -
+                        type: postback
+                        label: Masih
+                        text: Masih
+                        payload:
+                            ya: masih
+                    -
+                        type: postback
+                        label: Nggak
+                        text: Nggak
+                        payload:
+                            tidak: nggak
+methods:
+  parseTime(ctx): "
+    let date = new Date(ctx.context.$now + 300000);
+    let dateISO = date.toISOString();
+    let parsedDate = dateISO.split('T');
+    let parsedTime = parsedDate[1].split('.');
+    ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+
+    let dateEnd = new Date(ctx.context.$now + 360000);
+    let dateISOEnd = dateEnd.toISOString();
+    let parsedDateEnd = dateISOEnd.split('T');
+    let parsedTimeEnd = parsedDateEnd[1].split('.');
+    ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+    return ctx;
+  "

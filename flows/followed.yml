@@ -1,0 +1,42 @@
+volatile: true
+invalidate: 1520539256476
+active: true
+intents:
+    addAsFriend:
+        initial: true
+        type: data
+        condition: payload.type == "follow"
+    gotoFollowed:
+        type: command
+        initial: true
+        condition: 'content == "gotoFollowed"'
+states:
+    addAsFriend:
+        initial: true
+        transitions:
+            welcomeMessage:
+                fallback: true
+                mapping:
+                    context.userId: metadata.lineSenderId
+                    context.token: metadata.lineAccessToken
+    welcomeMessage:
+        end: true
+        action:
+            -   name: greetAsFriend
+            -   name: goToGreetings
+actions:
+    greetAsFriend:
+        type: text
+        options:
+            text: Makasih ya udah jadikan aku teman. Salam Kenal, aku $(config.botDisplayName)!
+    callLineApi:
+        type: api
+        options:
+            method: "GET"
+            headers:
+                Authorization: "Bearer $(context.token)"
+            uri: https://api.line.me/v2/bot/profile/$(context.userId)
+    goToGreetings:
+        type: command
+        options:
+            command: goToGreetings

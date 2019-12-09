@@ -1,0 +1,68 @@
+volatile: true
+invalidate: 1520539256476
+active: true 
+intents:
+    greeting:
+        priority: 5
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            expression: "qisg == 'greetings'"
+    goToGreetings:
+        type: command
+        initial: true
+        condition: 'content == "goToGreetings"'
+    restartProfile:
+        initial: true
+        priority: 16
+        condition:
+            - "content == '#kataojakulangdariawal'"
+            - "content == '#kataojak'"
+states:
+    init:
+        enter: parseTime
+        initial: true
+        transitions:
+            greeting:
+                condition: 'intent == "greeting" || intent == "goToGreetings"'
+            init:
+                fallback: true
+    greeting:
+        enter: parseTime
+        action:
+            -   name: greetings
+            -   name: goToMenu
+        end: true
+    restartProfileInfo:
+        float:
+            priority: 20
+            condition: "intent == 'restartProfile'"
+        enter:
+            data.restartStatus: "(intent == 'restartProfile') ? true : false"
+        action:
+            - name: goToMenu
+        end: true
+actions:
+    greetings:
+        type: text
+        options:
+            text: Hai, namaku Jaki, aku adalah kucing hutan yang sudah mulai punah karena kehilangan hutan sebagai tempat tinggal ku. Bantu Jaki dan teman teman Jaki yuk melalui Jejakin
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+methods:
+    parseTime(ctx): "
+        let date = new Date(ctx.context.$now + 300000);
+        let dateISO = date.toISOString();
+        let parsedDate = dateISO.split('T');
+        let parsedTime = parsedDate[1].split('.');
+        ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+        let dateEnd = new Date(ctx.context.$now + 360000);
+        let dateISOEnd = dateEnd.toISOString();
+        let parsedDateEnd = dateISOEnd.split('T');
+        let parsedTimeEnd = parsedDateEnd[1].split('.');
+        ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+        return ctx;
+    "

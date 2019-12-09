@@ -1,0 +1,1604 @@
+id: b9a2f8cf-ec6d-4fdf-ae62-3b0763dcbf92
+revision: 8c2cf8cccac75cb2bab016677b795532cebfd5d4
+name: null
+tag: null
+version: 0.0.295
+desc: Jejakin Bot
+flows:
+    fallback:
+        fallback: true
+        volatile: true
+        invalidate: 1520539256476
+        intents:
+            fallbackIntent:
+                fallback: true
+        states:
+            init:
+                enter: parseTime
+                initial: true
+                end: true
+                transitions:
+                    init:
+                        fallback: true
+                action:
+                    -
+                        name: fallbackAction
+                        condition: context.$lastFlow != 'faq'
+                    -
+                        name: fallbackActionFaq
+                        condition: context.$lastFlow == 'faq'
+        actions:
+            fallbackAction:
+                type: text
+                options:
+                    text:
+                        - 'Maaf $(config.botDisplayName) belum paham apa yang kamu maksud :('
+            fallbackActionFaq:
+                type: text
+                options:
+                    text:
+                        - 'Maaf $(config.botDisplayName) belum bisa jawab pertanyaan kamu :('
+            userTimeOut:
+                type: schedule
+                options:
+                    id: userTimeOut
+                    command: add
+                    message:
+                        type: command
+                        content: userTimeOut
+                    start: $(data.parsedTime)
+                    end: $(data.parsedTimeEnd)
+                    freqType: minute
+                    freqInterval: 5
+            removeTimeOut:
+                type: schedule
+                options:
+                    id: userTimeOut
+                    command: remove
+        methods:
+            parseTime(ctx): >4-
+                 let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split('T'); let parsedTime = parsedDate[1].split('.'); ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+                let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split('T');
+                let parsedTimeEnd = parsedDateEnd[1].split('.'); ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0]; return ctx; 
+    followed:
+        volatile: true
+        invalidate: 1520539256476
+        active: true
+        intents:
+            addAsFriend:
+                initial: true
+                type: data
+                condition: payload.type == "follow"
+            gotoFollowed:
+                type: command
+                initial: true
+                condition: content == "gotoFollowed"
+        states:
+            addAsFriend:
+                initial: true
+                transitions:
+                    welcomeMessage:
+                        fallback: true
+                        mapping:
+                            context:
+                                userId: metadata.lineSenderId
+                                token: metadata.lineAccessToken
+            welcomeMessage:
+                end: true
+                action:
+                    -
+                        name: greetAsFriend
+                    -
+                        name: goToGreetings
+        actions:
+            greetAsFriend:
+                type: text
+                options:
+                    text: 'Makasih ya udah jadikan aku teman. Salam Kenal, aku $(config.botDisplayName)!'
+            callLineApi:
+                type: api
+                options:
+                    method: GET
+                    headers:
+                        Authorization: Bearer $(context.token)
+                    uri: 'https://api.line.me/v2/bot/profile/$(context.userId)'
+            goToGreetings:
+                type: command
+                options:
+                    command: goToGreetings
+    greeting:
+        volatile: true
+        invalidate: 1520539256476
+        active: true
+        intents:
+            greeting:
+                priority: 5
+                initial: true
+                type: text
+                classifier:
+                    nlu: intent
+                    expression: qisg == 'greetings'
+            goToGreetings:
+                type: command
+                initial: true
+                condition: content == "goToGreetings"
+        states:
+            init:
+                enter: parseTime
+                initial: true
+                transitions:
+                    greeting:
+                        condition: intent == "greeting" || intent == "goToGreetings"
+                    init:
+                        fallback: true
+            greeting:
+                enter: parseTime
+                action:
+                    -
+                        name: greetings
+                    -
+                        name: goToMenu
+                end: true
+        actions:
+            greetings:
+                type: text
+                options:
+                    text: 'Hai! Aku $(config.botDisplayName), aku bisa kasih info tentang Jejak.In :D'
+            goToMenu:
+                type: command
+                options:
+                    command: goToMenu
+        methods:
+            parseTime(ctx): ' let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split(''T''); let parsedTime = parsedDate[1].split(''.''); ctx.data.parsedTime = parsedDate[0] + '' '' + parsedTime[0]; let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split(''T''); let parsedTimeEnd = parsedDateEnd[1].split(''.''); ctx.data.parsedTimeEnd = parsedDateEnd[0] + '' '' + parsedTimeEnd[0]; return ctx; '
+    menu:
+        volatile: true
+        invalidate: 1520539256476
+        active: true
+        intents:
+            goToMenu:
+                type: command
+                initial: true
+                condition: content == "goToMenu"
+        states:
+            init:
+                enter: parseTime
+                initial: true
+                transitions:
+                    menu:
+                        condition: intent == "goToMenu"
+                    init:
+                        fallback: true
+            menu:
+                enter: parseTime
+                action:
+                    -
+                        name: ask
+                    -
+                        name: imagemapMenu
+                end: true
+        actions:
+            ask:
+                type: text
+                options:
+                    text: Kamu mau tahu tentang apa?
+            imagemapMenu:
+                type: template
+                options:
+                    type: imagemap
+                    items:
+                        altText: Pilih menu yang kamu inginkan
+                        baseUrl: 'https://i.ibb.co/GCJ793B/menu.jpg'
+                        baseSize:
+                            height: 1040
+                            width: 1040
+                        actions:
+                            -
+                                text: Tentang Jejak.in
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 0
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Hitung Karbon
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 260
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Event Jejak.in
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 520
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Citarum Harum
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 780
+                                    width: 1040
+                                    height: 260
+            menuCarousel:
+                type: template
+                options:
+                    type: carousel
+                    items:
+                        -
+                            text: Buat kamu yang ingin tau tentang Jejak.in
+                            title: Tentang Jejak.in
+                            thumbnailImageUrl: 'https://www.atmajaya.ac.id/imagecontent/teknobiologi-magister-savira-registrasi.jpg'
+                            actions:
+                                -
+                                    type: postback
+                                    label: Pilih
+                                    payload:
+                                        menu: aboutjejak
+                        -
+                            text: Buat kamu yang ingin tau tentang Hari Pemulihan DAS
+                            title: Tentang Hari Pemulihan DAS
+                            thumbnailImageUrl: 'https://www.atmajaya.ac.id/imagecontent/teknobiologi-magister-savira-pindah-jurusan.jpg'
+                            actions:
+                                -
+                                    type: postback
+                                    label: Pilih
+                                    payload:
+                                        menu: aboutdas
+                        -
+                            text: $(config.botDisplayName) akan bantu kamu menghitung karbon
+                            title: Hitung Karbon
+                            thumbnailImageUrl: 'https://www.atmajaya.ac.id/imagecontent/teknobiologi-magister-savira-pindah-kampus.jpg'
+                            actions:
+                                -
+                                    type: postback
+                                    label: Pilih
+                                    payload:
+                                        menu: karbon
+        methods:
+            parseTime(ctx): >4-
+                 let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split('T'); let parsedTime = parsedDate[1].split('.'); ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+                let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split('T');
+                let parsedTimeEnd = parsedDateEnd[1].split('.'); ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0]; return ctx; 
+    tentangJejak:
+        volatile: true
+        invalidate: 1520539256476
+        active: true
+        intents:
+            aboutJejakByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Tentang Jejak.in'
+            aboutJejakByTyping:
+                initial: true
+                priority: 5
+                classifier:
+                    nlu: intent
+                    expression: intent == 'tentangJejak'
+            fiturJejakByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Fitur'
+            latarBelakangJejakByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Latar Belakang'
+            tujuanJejakByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Tujuan'
+            didukungOlehByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Didukung oleh'
+            chooseFiturKoordinatJejakByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Penyimpanan Koordinat'
+            chooseFiturQRJejakByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'QR Code'
+            chooseFiturOfflineJejakByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Mode Offline'
+            fallback:
+                fallback: true
+        states:
+            init:
+                enter: parseTime
+                initial: true
+                transitions:
+                    menuABoutJejak:
+                        condition: intent == "aboutJejakByImageMap" || intent == "aboutJejakByTyping"
+                    fiturJejak:
+                        condition: intent == "fiturJejakByImageMap"
+                    latarBelakangJejak:
+                        condition: intent == "latarBelakangJejakByImageMap"
+                    tujuanJejak:
+                        condition: intent == "tujuanJejakByImageMap"
+                    didukungOlehJejak:
+                        condition: intent == "didukungOlehByImageMap"
+                    showFitur:
+                        condition: >-
+                            intent == "chooseFiturKoordinatJejakByImageMap" || intent == "chooseFiturQRJejakByImageMap" || intent ==
+                            "chooseFiturOfflineJejakByImageMap"
+                    init:
+                        fallback: true
+            menuABoutJejak:
+                enter: parseTime
+                action:
+                    -
+                        name: bridgingAboutJejak
+                    -
+                        name: imageMapAboutJejak
+                transitions:
+                    fiturJejak:
+                        condition: intent == "fiturJejakByImageMap"
+                    latarBelakangJejak:
+                        condition: intent == "latarBelakangJejakByImageMap"
+                    tujuanJejak:
+                        condition: intent == "tujuanJejakByImageMap"
+                    didukungOlehJejak:
+                        condition: intent == "didukungOlehByImageMap"
+                    menuABoutJejak:
+                        fallback: true
+            latarBelakangJejak:
+                enter: parseTime
+                action:
+                    -
+                        name: showLatarBelakang
+                    -
+                        name: goToConfirm
+                end: true
+            tujuanJejak:
+                enter: parseTime
+                action:
+                    -
+                        name: showTujuan
+                    -
+                        name: goToConfirm
+                end: true
+            didukungOlehJejak:
+                enter: parseTime
+                action:
+                    -
+                        name: showDidukungOleh
+                    -
+                        name: goToConfirm
+                end: true
+            fiturJejak:
+                enter: parseTime
+                action:
+                    -
+                        name: bridgingFiturJejak
+                    -
+                        name: imageMapFiturJejak
+                transitions:
+                    showFitur:
+                        condition: >-
+                            intent == "chooseFiturKoordinatJejakByImageMap" || intent == "chooseFiturQRJejakByImageMap" || intent ==
+                            "chooseFiturOfflineJejakByImageMap"
+                    fiturJejak:
+                        fallback: true
+            showFitur:
+                enter: parseTime
+                action:
+                    -
+                        name: showFiturKoordinat
+                        condition: intent == 'chooseFiturKoordinatJejakByImageMap'
+                    -
+                        name: showFiturQR
+                        condition: intent == 'chooseFiturQRJejakByImageMap'
+                    -
+                        name: showFiturOffline
+                        condition: intent == 'chooseFiturOfflineJejakByImageMap'
+                    -
+                        name: goToConfirm
+                end: true
+        actions:
+            goToConfirm:
+                type: command
+                options:
+                    command: goToConfirm
+            bridgingAboutJejak:
+                type: text
+                options:
+                    text: 'Aku punya beberapa info tentang Jejak.In, mana yang ingin kamu tahu?'
+            bridgingFiturJejak:
+                type: text
+                options:
+                    text: Ada tiga fitur yang dikembangkan Jejakin // Fitur apa yang ingin kamu tahu?
+            showFiturKoordinat:
+                type: text
+                options:
+                    text: >-
+                        Sistem penandaan dan penyimpanan lokasi area tanam yang sangat fleksibel & tidak terbatas, menyediakan kemudahan pemantauan
+                        hari ini dan esok nanti.
+            showFiturQR:
+                type: text
+                options:
+                    text: >-
+                        Digunakan untuk memudahkan proses pencatatan Tanaman, saatnya ucapkan selamat tinggal pada tumpukan catatan kertas dan coretan
+                        papan tulis yang tidak berujung.
+            showFiturOffline:
+                type: text
+                options:
+                    text: >-
+                        Terobosan yang memungkinkan kegiatan pemantauan tanaman dilakukan tanpa Internet. Ketiadaan sinyal & jaringan tak lagi menjadi
+                        beban.
+            showLatarBelakang:
+                type: text
+                options:
+                    text: 'Jejak.In dibuat ketika banyaknya manusia terus mengembangkan teknologi hingga mengabaikan dampaknya terhadap lingkungan :('
+            showDidukungOleh:
+                type: text
+                options:
+                    text: 'Hingga saat ini, Jejak.In didukung oleh berbagai pihak seperti:'
+            showTujuan:
+                type: text
+                options:
+                    text: 'Sejak didirikan, Jejak.In selalu ingin berkontribusi pada sektor lingkungan, khususnya deforestrasi'
+            imageMapFiturJejak:
+                type: template
+                options:
+                    type: imagemap
+                    items:
+                        altText: 'Terdapat tiga fitur yang dimiliki Jejakinn, Mana yang ingin kamu ketahui?'
+                        baseUrl: 'https://i.ibb.co/fHnNZdM/fitur-jejak.jpg'
+                        baseSize:
+                            height: 1040
+                            width: 1040
+                        actions:
+                            -
+                                text: Penyimpanan Koordinat
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 0
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Mode Offline
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 346.667
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: QR Code
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 693.334
+                                    width: 1040
+                                    height: 260
+            imageMapAboutJejak:
+                type: template
+                options:
+                    type: imagemap
+                    items:
+                        altText: Pilih menu yang kamu inginkan
+                        baseUrl: 'https://i.ibb.co/3zcGrt0/tentang-jejak.jpg'
+                        baseSize:
+                            height: 1040
+                            width: 1040
+                        actions:
+                            -
+                                text: Latar Belakang
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 0
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Tujuan
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 260
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Didukung oleh
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 520
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Fitur
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 780
+                                    width: 1040
+                                    height: 260
+            goToMenu:
+                type: command
+                options:
+                    command: goToMenu
+        methods:
+            parseTime(ctx): ' let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split(''T''); let parsedTime = parsedDate[1].split(''.''); ctx.data.parsedTime = parsedDate[0] + '' '' + parsedTime[0]; let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split(''T''); let parsedTimeEnd = parsedDateEnd[1].split(''.''); ctx.data.parsedTimeEnd = parsedDateEnd[0] + '' '' + parsedTimeEnd[0]; return ctx; '
+    thanks:
+        intents:
+            goToThanks:
+                initial: true
+                type: command
+                condition: content == 'goToThanks'
+            goToThanksByPayload:
+                type: data
+                initial: true
+                condition: payload.goToThanks
+        states:
+            initThanks:
+                initial: true
+                end: true
+                transitions:
+                    initThanks:
+                        fallback: true
+                action:
+                    -
+                        name: sayThanks
+        actions:
+            sayThanks:
+                type: text
+                options:
+                    text: 'Makasih ya udah mau ngobrol sama Jaki! :D'
+    confirm:
+        volatile: true
+        invalidate: 1520539256476
+        intents:
+            goToConfirm:
+                initial: true
+                type: command
+                condition: content == 'goToConfirm'
+            goToConfirmByPayload:
+                initial: true
+                type: data
+                condition: payload.goToConfirm
+            goToConfirmByCancel:
+                initial: true
+                type: command
+                condition: content == 'goToConfirmByCancel'
+            'yes':
+                type: text
+                classifier:
+                    nlu: yesno
+                    expression: yesno == 'yes'
+            'no':
+                type: text
+                classifier:
+                    nlu: yesno
+                    expression: yesno == 'no'
+            yesButton:
+                type: data
+                condition: payload.ya
+                fallback: false
+            noButton:
+                type: data
+                condition: payload.tidak
+                fallback: false
+        states:
+            initConfirm:
+                enter: parseTime
+                initial: true
+                end: false
+                action:
+                    -
+                        name: askStillNeedHelp
+                transitions:
+                    goToMenu:
+                        condition: intent == "yesButton" || intent == "yes"
+                    goToThanks:
+                        condition: intent == "noButton" || intent == "no"
+                    initConfirm:
+                        fallback: true
+            goToMenu:
+                initial: false
+                end: true
+                action:
+                    -
+                        name: goToMenu
+            goToThanks:
+                initial: false
+                end: true
+                action:
+                    -
+                        name: goToThanks
+        actions:
+            goToMenu:
+                type: command
+                options:
+                    command: goToMenu
+            goToThanks:
+                type: command
+                options:
+                    command: goToThanks
+            askStillNeedHelp:
+                type: template
+                options:
+                    type: button
+                    items:
+                        title: Konfirmasi
+                        text: Masih mau tau yang lainnya?
+                        actions:
+                            -
+                                type: postback
+                                label: Masih
+                                text: Masih
+                                payload:
+                                    ya: masih
+                            -
+                                type: postback
+                                label: Nggak
+                                text: Nggak
+                                payload:
+                                    tidak: nggak
+        methods:
+            parseTime(ctx): >4-
+                 let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split('T'); let parsedTime = parsedDate[1].split('.'); ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+                let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split('T');
+                let parsedTimeEnd = parsedDateEnd[1].split('.'); ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0]; return ctx; 
+    hitungKarbon:
+        volatile: true
+        active: true
+        intents:
+            getKM:
+                type: text
+                classifier:
+                    nlu: numberFourDigit
+                attributes:
+                    jumlah:
+                        nlu: numberFourDigit
+            hitungKarbonByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Hitung Karbon'
+            hitungKarbonByTyping:
+                initial: true
+                priority: 5
+                classifier:
+                    nlu: intent
+                    expression: intent == 'hitungKarbon'
+            'yes':
+                type: data
+                initial: false
+                fallback: false
+                condition: payload.yesno == "yes"
+            yesByWord:
+                initial: true
+                classifier:
+                    nlu: yesno
+                    expression: yesno == 'yes'
+                condition: context.$state == 'menuHitungKarbon'
+                attributes:
+                    nlu: yesno
+                    path: null
+            'no':
+                type: data
+                initial: false
+                fallback: false
+                condition: payload.yesno == "no"
+            noByWord:
+                initial: true
+                classifier:
+                    nlu: yesno
+                    expression: yesno == 'no'
+                condition: context.$state == 'menuHitungKarbon'
+            motor:
+                initial: false
+                condition:
+                    - content == "Motor"
+            mobil:
+                initial: false
+                condition:
+                    - content == "Mobil"
+            motorDanMobil:
+                initial: false
+                condition:
+                    - content == "Motor dan Mobil"
+        states:
+            init:
+                enter: parseTime
+                initial: true
+                transitions:
+                    menuHitungKarbon:
+                        condition: intent == "hitungKarbonByImageMap" || intent == "hitungKarbonByTyping"
+                    init:
+                        fallback: true
+            askMobilorMotor:
+                enter: parseTime
+                action:
+                    -
+                        name: introduction
+                    -
+                        name: bridgingChooseMotorMobil
+                    -
+                        name: imagemapMotorMobil
+                transitions:
+                    askKilometer1:
+                        condition: intent == "motorDanMobil"
+                        mapping:
+                            context:
+                                transport: motor-mobil
+                    askKilometerOne:
+                        conditon: intent == "mobil"  || intent == "motor"
+                        mapping:
+                            context:
+                                transport: content
+                    goToConfirm:
+                        condition: intent == "no" || intent == "noByWord"
+            askKilometer1:
+                enter: parseTime
+                action:
+                    -
+                        name: askKilometerMotor
+                transitions:
+                    askKilometer2:
+                        condition: intent == "getKM"
+                        mapping:
+                            context:
+                                kmmotor: attributes.jumlah
+                    askKilometer1:
+                        fallback: true
+            askKilometer2:
+                enter: parseTime
+                action:
+                    -
+                        name: askKilometerMobil
+                transitions:
+                    askFamilyMember:
+                        condition: intent == "getKM"
+                        mapping:
+                            context:
+                                kmmobil: attributes.jumlah
+                    askKilometer2:
+                        fallback: true
+            askKilometerOne:
+                enter: parseTime
+                action:
+                    -
+                        name: askKilometerMotor
+                        condition: context.transport == "Motor"
+                    -
+                        name: askKilometerMobil
+                        condition: context.transport == "Mobil"
+                transitions:
+                    askFamilyMember:
+                        condition: intent == "getKM"
+                        mapping:
+                            context:
+                                kmone: attributes.jumlah
+                    askKilometerOne:
+                        fallback: true
+            askFamilyMember:
+                enter: parseTime
+                action:
+                    -
+                        name: askFamilyMember
+                transitions:
+                    askKipasAngin:
+                        condition: intent == "getKM"
+                        mapping:
+                            context:
+                                familyMember: attributes.jumlah
+                    askFamilyMember:
+                        fallback: true
+            askKipasAngin:
+                enter: parseTime
+                action:
+                    -
+                        name: askKipasAngin
+                transitions:
+                    askNontonTv:
+                        condition: intent == "yes" || intent == "no" || intent == "yesByWord" || intent == "noByWord"
+                        mapping:
+                            context:
+                                kipas: (payload.yesno || attributes.yesno)
+                    askKipasAngin:
+                        fallback: true
+            askNontonTv:
+                enter: parseTime
+                action:
+                    -
+                        name: askNontonTv
+                transitions:
+                    askElpiji:
+                        condition: intent == "yes" || intent == "no" || intent == "yesByWord" || intent == "noByWord"
+                        mapping:
+                            context:
+                                tv: (payload.yesno || attributes.yesno)
+                    askNontonTv:
+                        fallback: true
+            askElpiji:
+                enter: parseTime
+                action:
+                    -
+                        name: askElpiji
+                transitions:
+                    askKipasAngin:
+                        condition: intent == "getKM"
+                        mapping:
+                            context:
+                                lpg: attributes.jumlah
+                    askElpiji:
+                        fallback: true
+            askUsingAirMineral:
+                enter: parseTime
+                action:
+                    -
+                        name: askUsingAirMineral
+                transitions:
+                    askAirMineral:
+                        condition: intent == "yes" || intent == "no" || intent == "yesByWord" || intent == "noByWord"
+                        mapping:
+                            context:
+                                air: (payload.yesno || attributes.yesno)
+                    askUsingAirMineral:
+                        fallback: true
+            askAirMineral:
+                enter: parseTime
+                action:
+                    -
+                        name: askAirMineral
+                transitions:
+                    suggestion:
+                        condition: intent == "getKM"
+                        mapping:
+                            context:
+                                botolAir: attributes.jumlah
+                    askAirMineral:
+                        fallback: true
+            suggestion:
+                action:
+                    -
+                        name: hasilKarbon
+                    -
+                        name: suggestionPohon
+                    -
+                        name: goToConfirm
+                end: true
+        actions:
+            goToConfirm:
+                type: command
+                options:
+                    command: goToConfirm
+            introduction:
+                type: text
+                options:
+                    text: >-
+                        Jaki bisa membantu kamu untuk menghitung emisi karbon yang kamu hasilkan! :D // Jaki mulai dengan emisi karbon dari
+                        transportasimu yaa
+            askKipasAngin:
+                type: template
+                options:
+                    type: button
+                    items:
+                        text: 'Di rumahmu, apakah kamu menggunakan kipas angin atau AC?'
+                        actions:
+                            -
+                                type: postback
+                                label: Iya
+                                text: Iya
+                                payload:
+                                    yesno: 'yes'
+                            -
+                                type: postback
+                                label: Nggak
+                                text: Nggak
+                                payload:
+                                    yesno: 'no'
+            askNontonTv:
+                type: template
+                options:
+                    type: button
+                    items:
+                        text: 'Apakah kamu sering menikmati hiburan, seperti menonton tv?'
+                        actions:
+                            -
+                                type: postback
+                                label: Iya
+                                text: Iya
+                                payload:
+                                    yesno: 'yes'
+                            -
+                                type: postback
+                                label: Nggak
+                                text: Nggak
+                                payload:
+                                    yesno: 'no'
+            askUsingAirMineral:
+                type: template
+                options:
+                    type: button
+                    items:
+                        text: 'Terakhir deh :D apakah kamu biasa mengkonsumsi air mineral kemasan setiap hari?'
+                        actions:
+                            -
+                                type: postback
+                                label: Iya
+                                text: Iya
+                                payload:
+                                    yesno: 'yes'
+                            -
+                                type: postback
+                                label: Nggak
+                                text: Nggak
+                                payload:
+                                    yesno: 'no'
+            askKilometerMotor:
+                type: text
+                options:
+                    text: 'Biasanya, berapa kilometer yang kamu tempuh setiap harinya dengan motor kamu?'
+            bridgingChooseMotorMobil:
+                type: text
+                options:
+                    text: 'Sehari-hari, kamu menggunakan motor atau mobil? atau keduanya?'
+            askFamilyMember:
+                type: text
+                options:
+                    text: 'Okee, sekarang mari hitung emisi karbon dari kegiatan rumahmu ;) // Berapa orang yang tinggal di rumahmu?'
+            askElpiji:
+                type: text
+                options:
+                    text: 'Setiap minggunya, kamu menggunakan berapa kilogram Elpiji?'
+            askAirMineral:
+                type: text
+                options:
+                    text: 'Kira-kira, kamu mengkonsumsi berapa botol per hari?'
+            hasilKarbon:
+                type: text
+                options:
+                    text: 'Baiklah, kalau Jaki perkirakan, kamu bisa menghasilkan 3,5 ton emisi karbon per tahun :('
+            suggestionPohon:
+                type: text
+                options:
+                    text:
+                        - >-
+                            Besar juga ya? Jaki saranin, kamu bisa menanam satu pohon Cassia di rumahmu // Selain bunganya yang indah, pohon Cassia
+                            juga punya kemampuan menyerap gas karbon dengan baik lhoo:D
+            imagemapMotorMobil:
+                type: template
+                options:
+                    type: imagemap
+                    items:
+                        altText: Motor atau Mobil ? atau keduanya ?
+                        baseUrl: 'https://i.ibb.co/99kkR5s/33.jpg'
+                        baseSize:
+                            height: 1040
+                            width: 1040
+                        actions:
+                            -
+                                text: Motor
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 0
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Mobil
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 346.667
+                                    width: 1040
+                                    height: 260
+                            -
+                                text: Motor dan Mobil
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 693.334
+                                    width: 1040
+                                    height: 260
+            goToMenu:
+                type: command
+                options:
+                    command: goToMenu
+        methods:
+            parseTime(ctx): >4-
+                 let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split('T'); let parsedTime = parsedDate[1].split('.'); ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0]; let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split('T'); let parsedTimeEnd = parsedDateEnd[1].split('.'); ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+                var motor = ctx.context.km; var mobil = ctx.context.km;
+
+                if (mobil != 0){ var hasil_mobil = 0.21 * mobil; var hasil = hasil_mobil; }else if (motor != 0){ var hasil_motor = 0.075 * motor; var
+                hasil = hasil_motor; }else{ hasil = 0; }
+
+                ctx.context.hasil = hasil;
+
+                return ctx; 
+    eventJejakIn:
+        volatile: true
+        active: true
+        intents:
+            EventJejakInByImageMap:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Event Jejak.in'
+            EventJejakInByTyping:
+                initial: true
+                priority: 5
+                classifier:
+                    nlu: intent
+                    expression: intent == 'eventJejak'
+            TentangDasByTyping:
+                initial: true
+                priority: 5
+                classifier:
+                    nlu: intent
+                    expression: intent == 'tentangDAS'
+            'yes':
+                type: data
+                initial: false
+                fallback: false
+                condition: payload.yesno == "yes"
+            'no':
+                type: data
+                initial: false
+                fallback: false
+                condition: payload.yesno == "no"
+            pemulihanDAS:
+                type: data
+                initial: true
+                fallback: false
+                priority: 7
+                condition: payload.event == "pemulihanDas"
+            citarumHarum:
+                type: data
+                priority: 7
+                initial: false
+                fallback: false
+                condition: payload.event == "citarumHarumEvent"
+            tentangPemulihanDAS:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Tentang Hari Pemulihan DAS' || content == 'Tujuan Hari Pemulihan DAS' || content == 'Kegiatan Hari Pemulihan DAS'
+        states:
+            init:
+                enter: parseTime
+                initial: true
+                transitions:
+                    menuEventJejakIn:
+                        condition: intent == "EventJejakInByImageMap" || intent == "EventJejakInByTyping"
+                    pemulihanDAS:
+                        condition: intent == "TentangDasByTyping"
+                    askBackToMenu:
+                        condition: intent == "tentangPemulihanDAS"
+                    init:
+                        fallback: true
+            menuEventJejakIn:
+                enter: parseTime
+                action:
+                    -
+                        name: introduction
+                    -
+                        name: menuEvent
+                transitions:
+                    pemulihanDAS:
+                        condition: intent == "pemulihanDAS"
+                    gotoCitarumHarum:
+                        condition: intent == "citarumHarum"
+                    menuEventJejakIn:
+                        fallback: true
+            pemulihanDAS:
+                enter: parseTime
+                action:
+                    -
+                        name: introductionDAS
+                    -
+                        name: askAboutPemulihanDAS
+                    -
+                        name: imageMapMenu
+                transitions:
+                    askBackToMenu:
+                        condition: intent == "tentangPemulihanDAS"
+                    pemulihanDAS:
+                        fallback: true
+            gotoCitarumHarum:
+                enter: parseTime
+                action:
+                    -
+                        name: gotoCitarumHarum
+                end: true
+            askBackToMenu:
+                enter: parseTime
+                action:
+                    -
+                        name: tentang
+                        condition: content == "Tentang Hari Pemulihan DAS"
+                    -
+                        name: tujuan
+                        condition: content == "Tujuan Hari Pemulihan DAS"
+                    -
+                        name: kegiatan
+                        condition: content == "Kegiatan Hari Pemulihan DAS"
+                    -
+                        name: susunanAcara1
+                        condition: content == "Kegiatan Hari Pemulihan DAS"
+                    -
+                        name: susunanAcara2
+                        condition: content == "Kegiatan Hari Pemulihan DAS"
+                    -
+                        name: susunanAcara3
+                        condition: content == "Kegiatan Hari Pemulihan DAS"
+                    -
+                        name: goToConfirm
+                end: true
+        actions:
+            goToConfirm:
+                type: command
+                options:
+                    command: goToConfirm
+            introduction:
+                type: text
+                options:
+                    text: 'Sebagai bentuk konsistensi Jejak.In di ranah lingkungan, Jejak.In turut berpartisipasi di event-event berikut'
+            introductionDAS:
+                type: text
+                options:
+                    text: 'Hari Pemulihan DAS adalah acara yang kamu hadiri saat ini :D'
+            askAboutPemulihanDAS:
+                type: text
+                options:
+                    text: Apa yang ingin kamu ketahui tentang Hari Pemulihan DAS?
+            menuEvent:
+                type: template
+                options:
+                    type: carousel
+                    items:
+                        -
+                            text: Ketahui semua tentang Hari Pemulihan DAS
+                            title: Hari Pemulihan DAS
+                            thumbnailImageUrl: 'https://i.ibb.co/cLtrgCS/thumbnail-das.jpg'
+                            actions:
+                                -
+                                    type: postback
+                                    label: Pilih
+                                    payload:
+                                        event: pemulihanDas
+                        -
+                            text: Ketahui semua tentang Program Citarum Harum
+                            title: Citarum Harum
+                            thumbnailImageUrl: 'https://kopertis3.or.id/v5/wp-content/uploads/citarum-harum-780x400.jpg'
+                            actions:
+                                -
+                                    type: postback
+                                    label: Pilih
+                                    payload:
+                                        event: citarumHarumEvent
+            imageMapMenu:
+                type: template
+                options:
+                    type: imagemap
+                    items:
+                        altText: Pilih menu yang kamu inginkan
+                        baseUrl: 'https://i.ibb.co/1TFXV5j/11.jpg'
+                        baseSize:
+                            height: 1040
+                            width: 1040
+                        actions:
+                            -
+                                text: Tentang Hari Pemulihan DAS
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 0
+                                    width: 1040
+                                    height: 346.667
+                            -
+                                text: Tujuan Hari Pemulihan DAS
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 346.667
+                                    width: 1040
+                                    height: 346.667
+                            -
+                                text: Kegiatan Hari Pemulihan DAS
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 693.334
+                                    width: 1040
+                                    height: 346.667
+            goToMenu:
+                type: command
+                options:
+                    command: goToMenu
+            gotoCitarumHarum:
+                type: command
+                options:
+                    command: gotoCitarumHarum
+            tentang:
+                type: text
+                options:
+                    text: >-
+                        Pemulihan DAS adalah agenda tahunan dari Ditjen PDASHL yang menggabungkan berbagai pihak untuk bersama-sama menjaga Daerah
+                        Aliran Sungai (DAS)
+            tujuan:
+                type: text
+                options:
+                    text: >-
+                        Daerah Aliran Sungai (DAS) adalah tempat tumbuh berbagai makhluk hidup // Untuk menjaga keseimbangan ekosistemnya, acara ini
+                        dibuat untuk memberikan kesadaran bagi masyarakat :)
+            kegiatan:
+                type: text
+                options:
+                    text: 'Untuk mengetahui kegiatan hari ini, Jaki punya info nih // Lihat gambar berikut ini yaa :D'
+            susunanAcara1:
+                type: template
+                options:
+                    type: image
+                    items:
+                        originalContentUrl: 'https://i.ibb.co/nwKfvSh/image.png'
+                        previewImageUrl: 'https://i.ibb.co/nwKfvSh/image.png'
+            susunanAcara2:
+                type: template
+                options:
+                    type: image
+                    items:
+                        originalContentUrl: 'https://i.ibb.co/6wctSfb/image.png'
+                        previewImageUrl: 'https://i.ibb.co/6wctSfb/image.png'
+            susunanAcara3:
+                type: template
+                options:
+                    type: image
+                    items:
+                        originalContentUrl: 'https://i.ibb.co/MS76qZp/image.png'
+                        previewImageUrl: 'https://i.ibb.co/MS76qZp/image.png'
+            askBackToMenuOrPemulihanDAS:
+                type: template
+                options:
+                    type: button
+                    items:
+                        title: back to pemulihan DAS or back to menu ?
+                        text: Back to fiture ?
+                        actions:
+                            -
+                                type: postback
+                                label: pemulihanDAS
+                                text: pemulihanDAS
+                                payload:
+                                    yesno: 'yes'
+                            -
+                                type: postback
+                                label: backToMenu
+                                text: backToMenu
+                                payload:
+                                    yesno: 'no'
+        methods:
+            parseTime(ctx): ' let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split(''T''); let parsedTime = parsedDate[1].split(''.''); ctx.data.parsedTime = parsedDate[0] + '' '' + parsedTime[0]; let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split(''T''); let parsedTimeEnd = parsedDateEnd[1].split(''.''); ctx.data.parsedTimeEnd = parsedDateEnd[0] + '' '' + parsedTimeEnd[0]; return ctx; '
+    citarumHarum:
+        volatile: true
+        active: true
+        intents:
+            gotoCitarumHarum:
+                type: command
+                initial: true
+                condition: content == "gotoCitarumHarum"
+            EventJejakInByImageMap:
+                initial: true
+                condition:
+                    - content == 'Citarum Harum'
+            'yes':
+                type: data
+                initial: false
+                fallback: false
+                condition: payload.yesno == "yes"
+            'no':
+                type: data
+                initial: false
+                fallback: false
+                condition: payload.yesno == "no"
+            citarumHarum:
+                type: data
+                initial: true
+                fallback: false
+                condition: payload.event == "citarumHarum"
+            tentangCitarumHarum:
+                initial: true
+                priority: 7
+                condition:
+                    - content == 'Tentang Citarum Harum' || content == 'Tujuan Citarum Harum' || content == 'Kegiatan Citarum Harum'
+        states:
+            init:
+                enter: parseTime
+                initial: true
+                transitions:
+                    citarumHarum:
+                        condition: intent == "EventJejakInByImageMap" || intent == "gotoCitarumHarum"
+                    askBackToMenu:
+                        condition: intent == "tentangCitarumHarum"
+                    init:
+                        fallback: true
+            citarumHarum:
+                enter: parseTime
+                action:
+                    -
+                        name: askAboutCitarumHarum
+                    -
+                        name: imageMapMenu
+                transitions:
+                    askBackToMenu:
+                        condition: intent == "tentangCitarumHarum"
+                citarumHarum:
+                    fallback: true
+            askBackToMenu:
+                enter: parseTime
+                action:
+                    -
+                        name: tentang
+                        condition: content == "Tentang Citarum Harum"
+                    -
+                        name: tujuan
+                        condition: content == "Tujuan Citarum Harum"
+                    -
+                        name: kegiatan
+                        condition: content == "Kegiatan Citarum Harum"
+                    -
+                        name: goToConfirm
+                end: true
+        actions:
+            goToConfirm:
+                type: command
+                options:
+                    command: goToConfirm
+            introduction:
+                type: text
+                options:
+                    text: introduction tentang citarum harum belum ada
+            askAboutCitarumHarum:
+                type: text
+                options:
+                    text: Apa yang mau kamu tahu soal Citarum Harum?
+            imageMapMenu:
+                type: template
+                options:
+                    type: imagemap
+                    items:
+                        altText: Pilih menu yang kamu inginkan
+                        baseUrl: 'https://i.ibb.co/1TFXV5j/11.jpg'
+                        baseSize:
+                            height: 1040
+                            width: 1040
+                        actions:
+                            -
+                                text: Tentang Citarum Harum
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 0
+                                    width: 1040
+                                    height: 346.667
+                            -
+                                text: Tujuan Citarum Harum
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 346.667
+                                    width: 1040
+                                    height: 346.667
+                            -
+                                text: Kegiatan Citarum Harum
+                                type: message
+                                area:
+                                    x: 0
+                                    'y': 693.334
+                                    width: 1040
+                                    height: 346.667
+            goToMenu:
+                type: command
+                options:
+                    command: goToMenu
+            tentang:
+                type: text
+                options:
+                    text: >-
+                        Citarum Harum digiatkan pemerintah atas rasa prihatin kepada Sungai Citarum yang makin tercemar :( // Oleh karena itu, Citarum
+                        Harum dibuat untuk menanggulangi hal tersebut :D
+            tujuan:
+                type: text
+                options:
+                    text: 'Citarum Harum dibuat untuk menyudahi pencemaran Sungai Citarum yang masih terus terjadi hingga saat ini :('
+            kegiatan:
+                type: text
+                options:
+                    text: 'Dari kegiatan yang ada, Jejak.In berkontribusi lebih dalam menghadirkan fitur pengawasan pohon melalui ponsel seluler :D'
+        methods:
+            parseTime(ctx): ' let date = new Date(ctx.context.$now + 300000); let dateISO = date.toISOString(); let parsedDate = dateISO.split(''T''); let parsedTime = parsedDate[1].split(''.''); ctx.data.parsedTime = parsedDate[0] + '' '' + parsedTime[0]; let dateEnd = new Date(ctx.context.$now + 360000); let dateISOEnd = dateEnd.toISOString(); let parsedDateEnd = dateISOEnd.split(''T''); let parsedTimeEnd = parsedDateEnd[1].split(''.''); ctx.data.parsedTimeEnd = parsedDateEnd[0] + '' '' + parsedTimeEnd[0]; return ctx; '
+nlus:
+    intent:
+        type: nl
+        options:
+            nluId: 'jejakin-bot:jejak-main-nl'
+            token: 898b8ad4-e15a-4c02-977f-dd2bd328ec26
+            output: value
+            threshold: 0.3
+            flatten: true
+    yesno:
+        type: nl
+        options:
+            nluId: 'tbs-chatbot:NL-YesNo-Yara'
+            token: c9bf6969-ccfa-4f65-806c-3fa102e9dc1c
+            output: value
+            threshold: 0.7
+            flatten: true
+    numberFourDigit:
+        type: method
+        method: validateNumber
+    menu:
+        type: keyword
+        options:
+            keywords:
+                main:
+                    - menu
+                    - menu utama
+                galeriKon:
+                    - Galeri konstribusi
+                    - foto konstribusi
+                    - Galeri kontribusi
+                    - foto kontribusi
+                galeriBoom:
+                    - Galeri pohon bumee
+                    - foto pohon bumee
+                    - pohon bumee
+                kontribusiku:
+                    - konstribusiku
+                    - kontribusi
+                    - kontribusiku
+                    - konstribusi
+                hitung:
+                    - hitung carbon
+                    - hitung karbon
+                    - karbon
+                    - carbon
+                    - menghitung
+                    - hitung
+                product:
+                    - produk
+                help:
+                    - bantuan
+                komplain:
+                    - aduan
+                    - komplain
+                liveChat:
+                    - chat
+                    - live chat
+                    - kontak agen
+    confirmJenis:
+        type: regex
+        options:
+            regex: \w+
+    confirmJumlah:
+        type: regex
+        options:
+            regex: \d+
+    ner:
+        type: verstandTagger
+        options:
+            model: ner-jul-14-cnn
+    smallTalk:
+        type: keyword
+        options:
+            keywords:
+                kasar:
+                    - sialan
+                    - anjing
+                    - bangsat
+                    - kecewa
+    askJmlKel:
+        type: regex
+        options:
+            regex: '[0-9]'
+    askListrik:
+        type: regex
+        options:
+            regex: \d+
+    askGas:
+        type: regex
+        options:
+            regex: '[0-9]'
+    askSampah:
+        type: regex
+        options:
+            regex: '[0-9]'
+    askTransport:
+        type: keyword
+        options:
+            keywords:
+                Jalan kaki/Bersepeda:
+                    - jalan kaki
+                    - bersepeda
+                    - '1'
+                    - satu
+                Sepeda Motor:
+                    - motor
+                    - sepeda motor
+                    - '2'
+                    - dua
+                Mobil Pribadi/Taksi:
+                    - mobil pribadi
+                    - taksi
+                    - mobil
+                    - grabcar
+                    - gocar
+                    - '3'
+                    - tiga
+                Bus/Angkot:
+                    - bus
+                    - angkot
+                    - bis
+                    - '4'
+                    - empat
+                Kereta Api:
+                    - kereta
+                    - kereta api
+                    - krl
+                    - commuter line
+                    - ka
+                    - '5'
+                    - lima
+    askJarak:
+        type: regex
+        options:
+            regex: '[0-9]{2}'
+    askGalon:
+        type: regex
+        options:
+            regex: '[0-9]'
+    askInfo:
+        type: keyword
+        options:
+            keywords:
+                askJmlKel:
+                    - Jumlah keluarga
+                    - anggota keluarga
+                askListrik:
+                    - listrik
+                    - listriknya
+                askGas:
+                    - gas
+                    - epliji
+                    - lpg
+                    - gasnya
+                askSampah:
+                    - sampah
+                    - seuregi
+                askTransport:
+                    - transportasi
+                    - kendaraan
+                askJarak:
+                    - jarak
+                    - jauh
+                askGalon:
+                    - galon
+                    - air
+                    - galonnya
+methods:
+    validateNumber(message):
+        code: "function validate(message) {\r\n    let content = message.content || '';\r\n    if (!message || !message.type || message.type !== \"text\") {\r\n        return null;\r\n    }\r\n    var regex = /[0-9]{2}/gi;\r\n\r\n    if(content.match(regex)){\r\n        if(content.match(regex).length > 1){\r\n            return null;\r\n        }else{\r\n            return content.match(regex)[0];\r\n        }\r\n    }\r\n\r\n    // var motor = ctx.context.km;\r\n    //     var mobil = ctx.context.km;\r\n\r\n    //     if (mobil != 0){\r\n    //         var hasil_mobil = 0.21 * mobil;\r\n    //         var hasil = hasil_mobil;\r\n    //     }else if (motor != 0){\r\n    //         var hasil_motor = 0.075 * motor;\r\n    //         var hasil = hasil_motor;\r\n    //     }else{\r\n    //         hasil = 0;\r\n    //     }\r\n\r\n    //     ctx.context.hasil = hasil;\r\n\r\n    return null;\r\n}"
+        entry: validate
+config:
+    botDisplayName: Jaki
+    companyName: Nawatech
+    maxRecursion: 10

@@ -1,0 +1,69 @@
+fallback: true
+volatile: true
+invalidate: 1520539256476
+intents:
+    fallbackIntent:
+        fallback: true
+states:
+    init:
+        enter: parseTime
+        initial: true
+        end: true
+        transitions:
+            init:
+                fallback: true
+        action:
+            -   name: fallbackAction
+                condition: "context.$lastFlow != 'faq'"
+            -   name: fallbackActionFaq
+                condition: "context.$lastFlow == 'faq'"
+actions:
+    # fallbackAction:
+    #     type: text
+    #     options:
+    #         text:
+    #             - "Maaf, $(config.botDisplayName) tidak mengerti kata-kata mu nih"
+    #             - "Ups, $(config.botDisplayName) tidak mengerti maksud kamu"
+    #             - "$(config.botDisplayName) bingung nih kamu bicara apa..."
+    fallbackAction:
+        type: text
+        options:
+            text:
+                - Maaf $(config.botDisplayName) belum paham apa yang kamu maksud :(
+    fallbackActionFaq:
+        type: text
+        options:
+            text:
+                - Maaf $(config.botDisplayName) belum bisa jawab pertanyaan kamu :(
+    userTimeOut:
+        type: schedule
+        options:
+            id: userTimeOut
+            command: add
+            message:
+                type: command
+                content: userTimeOut
+            start: $(data.parsedTime)
+            end: $(data.parsedTimeEnd)
+            freqType: minute
+            freqInterval: 5
+    removeTimeOut:
+        type: schedule
+        options:
+            id: userTimeOut
+            command: remove
+methods:
+  parseTime(ctx): "
+    let date = new Date(ctx.context.$now + 300000);
+    let dateISO = date.toISOString();
+    let parsedDate = dateISO.split('T');
+    let parsedTime = parsedDate[1].split('.');
+    ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+
+    let dateEnd = new Date(ctx.context.$now + 360000);
+    let dateISOEnd = dateEnd.toISOString();
+    let parsedDateEnd = dateISOEnd.split('T');
+    let parsedTimeEnd = parsedDateEnd[1].split('.');
+    ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+    return ctx;
+  "

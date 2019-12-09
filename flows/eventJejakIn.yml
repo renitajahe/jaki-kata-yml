@@ -1,0 +1,285 @@
+volatile: true
+active: true
+invalidate: 1520539256476
+intents:
+    restartProfile:
+        initial: true
+        priority: 16
+        condition:
+            - "content == '#kataojakulangdariawal'"
+            - "content == '#kataojak'"
+    EventJejakInByImageMap:
+        initial: true
+        priority: 7
+        condition:
+            - "content == 'Kegiatan'"
+    EventJejakInByTyping:
+        initial: true
+        priority: 5
+        classifier:
+            nlu: intent
+            expression: "intent == 'eventJejak'"
+    TentangDasByTyping:
+        initial: true
+        priority: 5
+        classifier:
+            nlu: intent
+            expression: "intent == 'tentangDAS'"
+    yes:
+        type: data
+        initial: false
+        fallback: false
+        condition: 'payload.yesno == "yes"'
+    no:
+        type: data
+        initial: false
+        fallback: false
+        condition: 'payload.yesno == "no"'
+    pemulihanDAS:
+        type: data
+        initial: true
+        fallback: false
+        priority: 7
+        condition: 'payload.event == "pemulihanDas"'
+    citarumHarum:
+        type: data
+        priority: 7
+        initial: false
+        fallback: false
+        condition: 'payload.event == "citarumHarumEvent"'
+    tentangPemulihanDAS:
+        initial: true
+        priority: 7
+        condition:
+            - "content == 'Fakta Tentang DAS' || content == 'Manfaat Pemulihan DAS' || content == 'Agenda Pameran'"
+states:
+    init:
+        enter: parseTime
+        initial: true
+        transitions:
+            menuEventJejakIn:
+                condition: 'intent == "EventJejakInByImageMap" || intent == "EventJejakInByTyping"'
+            pemulihanDAS:
+                condition: 'intent == "TentangDasByTyping"'
+            askBackToMenu:
+                condition: 'intent == "tentangPemulihanDAS"'
+            init:
+                fallback: true
+    menuEventJejakIn:
+        enter: parseTime
+        action:
+            - name: introduction
+            - name: menuEvent
+        transitions:
+            pemulihanDAS:
+                condition: 'intent == "pemulihanDAS"'
+            gotoCitarumHarum:
+                condition: 'intent == "citarumHarum"'
+            menuEventJejakIn:
+                fallback: true
+    #Pemulihan DAS
+    pemulihanDAS:
+        enter: parseTime
+        action:
+            - name: introductionDAS
+            - name: askAboutPemulihanDAS
+            - name: imageMapMenu
+        transitions:
+            askBackToMenu:
+                condition: 'intent == "tentangPemulihanDAS"'
+            pemulihanDAS:
+                fallback: true
+    gotoCitarumHarum:
+        enter: parseTime
+        action:
+            - name: gotoCitarumHarum
+        end: true
+    askBackToMenu:
+        enter: parseTime
+        action:
+            -   name: tentang
+                condition: 'content == "Fakta Tentang DAS"'
+            -   name: imageFakta
+                condition: 'content == "Fakta Tentang DAS"'
+            -   name: tujuan
+                condition: 'content == "Manfaat Pemulihan DAS"'
+            -   name: imageManfaat
+                condition: 'content == "Manfaat Pemulihan DAS"'
+            -   name: kegiatan
+                condition: 'content == "Agenda Pameran"'
+            -   name: susunanAcara1
+                condition: 'content == "Agenda Pameran"'
+            # -   name: susunanAcara2
+            #     condition: 'content == "Agenda Pameran"'
+            # -   name: susunanAcara3
+            #     condition: 'content == "Agenda Pameran"'
+            -   name: goToConfirm
+        end: true
+actions:
+    goToConfirm:
+        type: command
+        options:
+            command: goToConfirm
+    # gotoCitarumHarum:
+    #     type: command
+    #     options:
+    #         command: gotoCitarumHarum
+    introduction:
+        type: text
+        options:
+            text: 'Jejakin bersama dengan komunitas, korporasi, dan pemerintah akan terus berupaya untuk konsisten dalam membangun lingkungan yang sehat untuk kita semua // Berikut adalah beberapa contoh kegiatan Jejakin yang sedang berjalan'
+    introductionDAS:
+        type: text
+        options:
+            text: 'Dalam rangka GNPDAS, Ditjen PDASHL Kementrian LHK mengadakan Pameran Pembangunan di Persemaian Permanen Purwakarta, pada tanggal 27-28 Desember 2018 '
+    askAboutPemulihanDAS:
+        type: text
+        options:
+            text: 'Apa yang ingin kamu ketahui tentang Pameran Pembangunan GNPDAS ini?'
+    menuEvent:
+        type: template
+        options:
+            type: carousel
+            items:
+                -
+                    text: Ketahui lebih lanjut tentang GNPDAS
+                    title: Gerakan Nasional Pemulihan DAS
+                    thumbnailImageUrl: https://i.ibb.co/cLtrgCS/thumbnail-das.jpg
+                    actions:
+                        -
+                            type: postback
+                            label: Pilih
+                            payload:
+                                event: pemulihanDas
+                -
+                    text: Ketahui lebih lanjut tentang Citarum Harum
+                    title: Citarum Harum
+                    thumbnailImageUrl: https://kopertis3.or.id/v5/wp-content/uploads/citarum-harum-780x400.jpg
+                    actions:
+                        -
+                            type: postback
+                            label: Pilih
+                            payload:
+                                event: citarumHarumEvent
+    imageMapMenu:
+        type: template
+        options:
+            type: imagemap
+            #TODO need to adjust the coordinate
+            items:
+                altText: Pilih menu yang kamu inginkan
+                baseUrl: https://i.ibb.co/LCX4g54/33-1-100.jpg
+                baseSize:
+                    height: 1040
+                    width: 1040
+                actions:
+                    -   text: "Fakta Tentang DAS"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 0
+                            width: 1040
+                            height: 346.667
+                    -   text: "Manfaat Pemulihan DAS"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 346.667
+                            width: 1040
+                            height: 346.667
+                    -   text: "Agenda Pameran"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 693.334
+                            width: 1040
+                            height: 346.667
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+    gotoCitarumHarum:
+        type: command
+        options:
+            command: gotoCitarumHarum
+    tentang:
+        type: text
+        options:
+            text: DAS (Daerah Aliran Sungai) adalah suatu wilayah daratan yang merupakan satu kesatuan dengan sungai dan anak-anak sungainya, yang berfungsi menampung, menyimpan, dan mengalirkan air yang berasal dari curah hujan ke danau atau ke laut secara alami. // DAS dari hulu ke hilir biasanya memiliki isu lingkungan yang beragam. // DAS harus selalu kita jaga, agar kita terhindar dari berbagai macam ancaman bahaya.
+    tujuan:
+        type: text
+        options:
+            text: DAS dapat kita jaga salah satunya dengan cara melakukan penanaman pohon di sekitar area DAS dari hulu ke hilir // Dengan menanam pohon, maka lingkungan lebih sehat karena lebih banyak oksigen dihasilkan, dan lebih banyak CO2 diserap. // Hasil dari pohon seperti buah, getah, daun, dan lainnya dapat di panen dan membantu perekonomian masyarakat sekitar.
+    kegiatan:
+        type: text
+        options:
+            text: Acara Pameran Pembangunan GNPDAS kali ini seru banget lho! // Agenda acaranya bisa kamu lihat detailnya dibawah ini ya
+    susunanAcara1:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/K2LhN0L/Whats-App-Image-2018-12-27-at-17-04-34.jpg
+                previewImageUrl: https://i.ibb.co/K2LhN0L/Whats-App-Image-2018-12-27-at-17-04-34.jpg
+    imageFakta:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/FnznQsH/image.png
+                previewImageUrl: https://i.ibb.co/FnznQsH/image.png
+    imageManfaat:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/pww5tSY/image.png
+                previewImageUrl: https://i.ibb.co/pww5tSY/image.png
+    susunanAcara2:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/vjk772T/image.png
+                previewImageUrl: https://i.ibb.co/vjk772T/image.png
+    susunanAcara3:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/ZW5L3th/image.png
+                previewImageUrl: https://i.ibb.co/ZW5L3th/image.png
+    askBackToMenuOrPemulihanDAS:
+        type: template
+        options:
+            type: button
+            items:
+                title: back to pemulihan DAS or back to menu ?
+                text: 'Back to fiture ?'
+                actions:
+                    -
+                        type: postback
+                        label: 'pemulihanDAS'
+                        text: 'pemulihanDAS'
+                        payload:
+                            yesno: 'yes'
+                    -
+                        type: postback
+                        label: 'backToMenu'
+                        text: 'backToMenu'
+                        payload:
+                            yesno: 'no'
+methods:
+    parseTime(ctx): "
+        let date = new Date(ctx.context.$now + 300000);
+        let dateISO = date.toISOString();
+        let parsedDate = dateISO.split('T');
+        let parsedTime = parsedDate[1].split('.');
+        ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+        let dateEnd = new Date(ctx.context.$now + 360000);
+        let dateISOEnd = dateEnd.toISOString();
+        let parsedDateEnd = dateISOEnd.split('T');
+        let parsedTimeEnd = parsedDateEnd[1].split('.');
+        ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+        return ctx;
+    "

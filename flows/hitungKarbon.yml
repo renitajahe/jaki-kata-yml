@@ -1,0 +1,448 @@
+volatile: true
+active: true
+invalidate: 1520539256476
+intents:
+    getKM:
+        priority: 3
+        type : text
+        classifier:
+            nlu: numberFourDigit
+        attributes:
+            jumlah:
+                nlu: numberFourDigit
+    hitungKarbonByImageMap:
+        initial: true
+        priority: 7
+        condition:
+            - "content == 'Hitung Karbonku'"
+    hitungKarbonByTyping:
+        initial: true
+        priority: 5
+        classifier:
+            nlu: intent
+            expression: "intent == 'hitungKarbon'"
+    yes:
+        type: data
+        initial: false
+        fallback: false
+        condition: 'payload.yesno == "yes"'
+    yesByWord:
+        initial: false
+        classifier:
+            nlu: yesno
+            expression: "yesno == 'yes'"
+        condition: "context.$state == 'askKipasAngin' || context.$state == 'askNontonTvYes' || context.$state == 'askNontonTvNo' || context.$state == 'askUsingAirMineral'"
+        # attributes:
+        #     nlu: yesno
+        #     path:
+    no:
+        type: data
+        initial: false
+        fallback: false
+        condition: 'payload.yesno == "no"'
+    noByWord:
+        initial: false
+        classifier:
+            nlu: yesno
+            expression: "yesno == 'no'"
+        condition: "context.$state == 'askKipasAngin' || context.$state == 'askNontonTvYes' || context.$state == 'askNontonTvNo' || context.$state == 'askUsingAirMineral'"
+    motor:
+        initial: false
+        priority: 3
+        condition:
+            - 'content == "Motor"'
+    mobil:
+        initial: false
+        priority: 3
+        condition:
+            - 'content == "Mobil"'
+    motorDanMobil:
+        initial: false
+        priority: 3
+        condition:
+            - 'content == "Motor dan Mobil"'
+    fallback:
+        fallback: true
+states:
+    init:
+        enter: parseTime
+        initial: true
+        transitions:
+            askMobilorMotor:
+                condition: 'intent == "hitungKarbonByImageMap" || intent == "hitungKarbonByTyping"'
+            init:
+                fallback: true
+    askMobilorMotor:
+        enter: parseTime
+        action:
+            - name: introduction
+            - name: bridgingChooseMotorMobil
+            - name: imagemapMotorMobil
+        transitions:
+            askKilometer1:
+                condition: 'intent == "motorDanMobil"'
+                mapping:
+                    context.transport2: "true"
+            askKilometerOne:
+                condition: 'intent == "mobil" || intent == "motor"'
+                mapping:
+                    context.transport: content
+            askMobilorMotor:
+                fallback: true
+    askKilometer1:
+        enter: parseTime
+        action:
+            - name: askKilometerMotor
+        transitions:
+            askKilometer2:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.kmmotor: attributes.jumlah
+            askKilometer1:
+                fallback: true
+    askKilometer2:
+        enter: parseTime
+        action:
+            -   name: askKilometerMobil
+        transitions:
+            askFamilyMember:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.kmmobil: attributes.jumlah
+            askKilometer2:
+                fallback: true
+    askKilometerOne:
+        enter: parseTime
+        action:
+            -   name: askKilometerMotor
+                condition: 'context.transport == "Motor"'
+            -   name: askKilometerMobil
+                condition: 'context.transport == "Mobil"'
+        transitions:
+            askFamilyMember:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.kmone: attributes.jumlah
+            askKilometerOne:
+                fallback: true
+                mapping:
+                    context.transport: content
+    askFamilyMember:
+        enter: parseTime
+        action:
+            -   name: askFamilyMember
+        transitions:
+            askKipasAngin:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.familyMember: attributes.jumlah
+            askFamilyMember:
+                fallback: true
+    askKipasAngin:
+        enter: parseTime
+        action:
+            -   name: askKipasAngin
+        transitions:
+            askNontonTvYes:
+                condition: 'intent == "yes" || intent == "yesByWord"'
+                mapping:
+                    context.kipas: "true"
+            askNontonTvNo:
+                condition: 'intent == "no" || intent == "noByWord"'
+                mapping:
+                    context.kipas: "false"
+            askKipasAngin:
+                fallback: true
+    askNontonTvYes:
+        enter: parseTime
+        action:
+            -   name: askNontonTv
+        transitions:
+            askElpijiYes:
+                condition: 'intent == "yes" || intent == "yesByWord"'
+                mapping:
+                    context.tv: "true"
+            askElpijiNo:
+                condition: 'intent == "no" || intent == "noByWord"'
+                mapping:
+                    context.tv: "false"
+            askNontonTv:
+                fallback: true
+    askNontonTvNo:
+        enter: parseTime
+        action:
+            -   name: askNontonTv
+        transitions:
+            askElpijiYes:
+                condition: 'intent == "yes" || intent == "yesByWord"'
+                mapping:
+                    context.tv: "true"
+            askElpijiNo:
+                condition: 'intent == "no" || intent == "noByWord"'
+                mapping:
+                    context.tv: "false"
+            askNontonTv:
+                fallback: true
+    askElpijiYes:
+        enter: parseTime
+        action:
+            -   name: askElpiji
+        transitions:
+            askUsingAirMineral:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.lpg: attributes.jumlah
+            askElpiji:
+                fallback: true
+    askElpijiNo:
+        enter: parseTime
+        action:
+            -   name: askElpiji
+        transitions:
+            askUsingAirMineral:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.lpg: attributes.jumlah
+            askElpiji:
+                fallback: true
+    askUsingAirMineral:
+        enter: parseTime
+        action:
+            -   name: askUsingAirMineral
+        transitions:
+            askAirMineral:
+                condition: 'intent == "yes" || intent == "yesByWord"'
+                mapping:
+                    context.air: "true"
+            suggestion:
+                condition: 'intent == "no" || intent == "noByWord"'
+                mapping:
+                    context.air: "false"
+            askUsingAirMineral:
+                fallback: true
+    askAirMineral:
+        enter: parseTime
+        action:
+            -   name: askAirMineral
+        transitions:
+            suggestion:
+                condition: 'intent == "getKM"'
+                mapping:
+                    context.botolAir: attributes.jumlah
+            askAirMineral:
+                fallback: true
+    suggestion:
+        enter: hitungKarbon
+        action:
+            -   name: hasilKarbon
+            -   name: suggestionPohon1
+                condition: "context.jenisPohon = 1"
+            -   name: fotoPohon1
+                condition: "context.jenisPohon = 1"
+            -   name: suggestionPohon2
+                condition: "context.jenisPohon = 2"
+            -   name: fotoPohon2
+                condition: "context.jenisPohon = 2"
+            -   name: suggestionPohon3
+                condition: "context.jenisPohon = 3"
+            -   name: fotoPohon3
+                condition: "context.jenisPohon = 3"
+            -   name: goToConfirm
+        end: true
+actions:
+    goToConfirm:
+        type: command
+        options:
+            command: goToConfirm
+    introduction:
+        type: text
+        options:
+            text: 'Hai, Jaki bisa membantu kamu untuk menghitung emisi karbon yang kamu hasilkan lho. // Jaki mulai dengan emisi karbon dari transportasimu yaa'
+    askKipasAngin:
+        type: template
+        options:
+            type:  button
+            items:
+                text: 'Di rumahmu, apakah kamu menggunakan kipas angin atau AC?'
+                actions:
+                    -
+                        type: postback
+                        label: 'Iya'
+                        text: 'Iya'
+                        payload:
+                            yesno: 'yes'
+                    -
+                        type: postback
+                        label: 'Nggak'
+                        text: 'Nggak'
+                        payload:
+                            yesno: 'no'
+    askNontonTv:
+        type: template
+        options:
+            type: button
+            items:
+                text: 'Apakah kamu sering menikmati hiburan, seperti menonton tv?'
+                actions:
+                    -
+                        type: postback
+                        label: 'Iya'
+                        text: 'Iya'
+                        payload:
+                            yesno: 'yes'
+                    -
+                        type: postback
+                        label: 'Nggak'
+                        text: 'Nggak'
+                        payload:
+                            yesno: 'no'
+    askUsingAirMineral:
+        type: template
+        options:
+            type: button
+            items:
+                text: 'Terakhir deh :D apakah kamu biasa mengkonsumsi air mineral kemasan setiap hari?'
+                actions:
+                    -
+                        type: postback
+                        label: 'Iya'
+                        text: 'Iya'
+                        payload:
+                            yesno: 'yes'
+                    -
+                        type: postback
+                        label: 'Nggak'
+                        text: 'Nggak'
+                        payload:
+                            yesno: 'no'
+    askKilometerMotor:
+        type: text
+        options:
+            text: 'Biasanya, berapa kilometer yang kamu tempuh setiap harinya dengan motor kamu?'
+    askKilometerMobil:
+        type: text
+        options:
+            text: 'Oke, berapa kilometer yang kamu tempuh setiap harinya dengan mobil kamu?'
+    bridgingChooseMotorMobil:
+        type: text
+        options:
+            text: 'Sehari-hari, kamu menggunakan motor atau mobil? atau keduanya?'
+    askFamilyMember:
+        type: text
+        options:
+            text: 'Okee, sekarang mari hitung emisi karbon dari kegiatan rumahmu ;) // Berapa orang yang tinggal di rumahmu?'
+    askElpiji:
+        type: text
+        options:
+            text: 'Setiap minggunya, kamu menggunakan berapa kilogram Elpiji?'
+    askAirMineral:
+        type: text
+        options:
+            text: 'Kira-kira, kamu mengkonsumsi berapa botol air per hari? (1 botol = 600 ml)'
+    hasilKarbon:
+        type: text
+        options:
+            text: 'Baiklah, kalau Jaki perkirakan, kamu bisa menghasilkan $(context.karbonPerYear) ton emisi karbon per tahun :('
+    suggestionPohon1:
+        type: text
+        options:
+            text:
+                - 'Besar juga ya? Jaki saranin, kamu bisa menanam $(context.cassia) pohon Cassia di rumahmu // Selain bunganya yang indah, pohon Cassia juga punya kemampuan menyerap gas karbon dengan baik lhoo :D // Kalau kamu ingin berkontribusi lebih banyak lagi bersama Jaki, kamu bisa langsung hubungi Jejak.in ya. '
+    suggestionPohon2:
+        type: text
+        options:
+            text:
+                - 'Besar juga ya? Jaki saranin, kamu bisa menanam $(context.kenanga) pohon Kenanga di rumahmu // Selain bunganya yang indah, pohon Kenanga juga punya kemampuan menyerap gas karbon dengan baik lhoo :D // Kalau kamu ingin berkontribusi lebih banyak lagi bersama Jaki, kamu bisa langsung hubungi Jejak.in ya. '
+    suggestionPohon3:
+        type: text
+        options:
+            text:
+                - 'Besar juga ya? Jaki saranin, kamu bisa menanam $(context.bungur) pohon Bungur di rumahmu // Selain bunganya yang indah, pohon Bungur juga punya kemampuan menyerap gas karbon dengan baik lhoo :D // Kalau kamu ingin berkontribusi lebih banyak lagi bersama Jaki, kamu bisa langsung hubungi Jejak.in ya. '
+    fotoPohon1:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://cdn.pixabay.com/photo/2014/06/30/19/45/cassia-fistula-380695_960_720.jpg
+                previewImageUrl: https://cdn.pixabay.com/photo/2014/06/30/19/45/cassia-fistula-380695_960_720.jpg
+    fotoPohon2:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://cdn1.foap.com/images/08416f22-42c1-4429-9931-a7f333ef685c/w640.jpg?1523686383
+                previewImageUrl: https://cdn1.foap.com/images/08416f22-42c1-4429-9931-a7f333ef685c/w640.jpg?1523686383
+    fotoPohon3:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://www.tamantropis.com/wp-content/uploads/2017/02/Mengenal-Tanaman-Bungur.jpg
+                previewImageUrl: https://www.tamantropis.com/wp-content/uploads/2017/02/Mengenal-Tanaman-Bungur.jpg
+    imagemapMotorMobil:
+        type: template
+        options:
+            type: imagemap
+            #TODO need to adjust the coordinate
+            items:
+                altText: Motor atau Mobil ? atau keduanya ?
+                baseUrl: https://i.ibb.co/99kkR5s/33.jpg
+                baseSize:
+                    height: 1040
+                    width: 1040
+                actions:
+                    -   text: "Motor"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 0
+                            width: 1040
+                            height: 260
+                    -   text: "Mobil"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 346.667
+                            width: 1040
+                            height: 260
+                    -   text: "Motor dan Mobil"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 693.334
+                            width: 1040
+                            height: 260
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+methods:
+    parseTime(ctx): "
+        let date = new Date(ctx.context.$now + 300000);
+        let dateISO = date.toISOString();
+        let parsedDate = dateISO.split('T');
+        let parsedTime = parsedDate[1].split('.');
+        ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+        let dateEnd = new Date(ctx.context.$now + 360000);
+        let dateISOEnd = dateEnd.toISOString();
+        let parsedDateEnd = dateISOEnd.split('T');
+        let parsedTimeEnd = parsedDateEnd[1].split('.');
+        ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+
+        var motor = ctx.context.km;
+        var mobil = ctx.context.km;
+
+        if (mobil != 0){
+            var hasil_mobil = 0.21 * mobil;
+            var hasil = hasil_mobil;
+        }else if (motor != 0){
+            var hasil_motor = 0.075 * motor;
+            var hasil = hasil_motor;
+        }else{
+            hasil = 0;
+        }
+
+        ctx.context.hasil = hasil;
+
+        return ctx;
+    "

@@ -1,0 +1,26 @@
+schema: kata.ai/schema/kata-ml/1.0
+name: Jaki
+desc: Jejakin Bot
+version: 0.0.525
+flows:
+    fallback: $include(./flows/fallback.yml)
+    greeting: $include(./flows/greeting.yml)
+    menu: $include(./flows/menu.yml)
+    followed: $include(./flows/followed.yml)
+    tentangJejak: $include(./flows/aboutJejak.yml)
+    eventJejakIn: $include(./flows/eventJejakIn.yml)
+    citarumHarum: $include(./flows/citarumHarum.yml)
+    hitungKarbonNew: $include(./flows/hitungKarbonNew.yml)
+    thanks: $include(./flows/thanks.yml)
+    confirm: $include(./flows/confirm.yml)
+nlus: $include(./nlus.yml)
+methods:
+    hitungKarbon(ctx):
+        code: $include(./methods/hitungKarbon.js)
+        entry: hitung
+    validateNumber(message):
+        code: $include(./methods/validateNumber.js)
+        entry: validate
+config: $include(./config.yml)
+tag: null
+id: 895b9fc7-bcf9-4c02-a0dd-d066c11fcf9a

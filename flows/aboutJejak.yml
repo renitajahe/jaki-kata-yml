@@ -1,0 +1,315 @@
+volatile: true
+invalidate: 1520539256476
+active: true
+intents:
+    # aboutJejakByImageMap:
+    #     initial: true
+    #     priority: 7
+    #     condition: 
+    #         - "content == 'Tentang Jejakin'"
+    # aboutJejakByCarousel:
+    #     initial: true
+    #     priority: 7
+    #     condition: 
+    #         - "content == 'Tentang Jejakin'"
+    # aboutJejakByTyping:
+    #     initial: true
+    #     priority: 5
+    #     classifier:
+    #         nlu: intent
+    #         expression: "intent == 'tentangJejak'"
+    # fiturJejakByCarousel:
+    #     initial: true
+    #     priority: 7
+    #     type: data
+    #     condition: payload.menu == "hitungDampak"
+    # fiturJejakByTyping:
+    #     initial: true
+    #     priority: 7
+    #     type: text
+    #     classifier:
+    #         nlu: main
+    #         expression: "main == 'hitungDampak'"
+    # latarBelakangJejakByImageMap:
+    #     initial: true
+    #     priority: 7
+    #     condition:
+    #         - "content == 'Fakta Saat Ini'"
+    tujuanJejakByCarousel:
+        initial: true
+        priority: 7
+        type: data
+        condition: payload.menu == "aboutJejak"
+    tujuanJejakByTyping:
+        initial: true
+        priority: 7
+        type: text
+        classifier:
+            nlu: main
+            expression: "main == 'aboutJejak'"
+    # didukungOlehByImageMap:
+    #     initial: true
+    #     priority: 7
+    #     condition:
+    #         - "content == 'Fitur Aplikasi'"
+    chooseFiturKoordinatJejakByImageMap:
+        initial: true
+        priority: 7
+        condition:
+            - "content == 'Penyimpanan Koordinat'"
+    chooseFiturQRJejakByImageMap:
+        initial: true
+        priority: 7
+        condition:
+            - "content == 'QR Code'"
+    chooseFiturOfflineJejakByImageMap:
+        initial: true
+        priority: 7
+        condition:
+            - "content == 'Mode Offline'"
+    restartProfile:
+        initial: true
+        priority: 16
+        condition:
+            - "content == '#kataojakulangdariawal'"
+            - "content == '#kataojak'"
+    fallback:
+        fallback: true
+states:
+    init:
+        enter: parseTime
+        initial: true
+        transitions:
+            # menuABoutJejak:
+            #     condition: 'intent == "aboutJejakByImageMap" || intent == "aboutJejakByTyping"'
+            # fiturJejak:
+            #     condition: 'intent == "fiturJejakByCarousel" || intent == "fiturJejakByTyping"'
+            # latarBelakangJejak:
+            #     condition: 'intent == "latarBelakangJejakByImageMap"'
+            tujuanJejak:
+                condition: 'intent == "tujuanJejakByCarousel" || intent == "tujuanJejakByTyping"'
+            # didukungOlehJejak:
+            #     condition: 'intent == "didukungOlehByImageMap"'  
+            showFitur:
+                condition: 'intent == "chooseFiturKoordinatJejakByImageMap" || intent == "chooseFiturQRJejakByImageMap" || intent == "chooseFiturOfflineJejakByImageMap"'
+            init:
+                fallback: true
+    # menuABoutJejak:
+    #     enter: parseTime
+    #     action:
+    #         -   name: bridgingAboutJejak
+    #         -   name: carouselAboutJejak
+    #     transitions:
+    #         fiturJejak:
+    #             condition: 'intent == "fiturJejakByCarousel" || intent == "fiturJejakByTyping"'
+            # latarBelakangJejak:
+            #     condition: 'intent == "latarBelakangJejakByImageMap"'
+            # tujuanJejak:
+            #     condition: 'intent == "tujuanJejakByCarousel" || intent == "tujuanJejakByTyping"'
+            # didukungOlehJejak:
+            #     condition: 'intent == "didukungOlehByImageMap"'
+            # menuABoutJejak:
+            #     fallback: true
+    
+    latarBelakangJejak:
+        enter: parseTime
+        action:
+            -   name: showLatarBelakang
+            -   name: imageFakta
+            -   name: goToConfirm
+        end: true
+    tujuanJejak:
+        enter: parseTime
+        action:
+            -   name: showTujuan
+            -   name: imageTentang
+            -   name: goToConfirm
+        end: true
+    didukungOlehJejak:
+        enter: parseTime
+        action:
+            -   name: showDidukungOleh
+            -   name: imageFitur
+            -   name: goToConfirm
+        end: true
+    fiturJejak:
+        enter: parseTime
+        action:
+            -   name: bridgingFiturJejak
+            -   name: imageDampak
+            -   name: goToConfirm
+            # -   name: imageMapFiturJejak
+        end: true
+        # transitions:
+        #     showFitur:
+        #         condition: 'intent == "chooseFiturKoordinatJejakByImageMap" || intent == "chooseFiturQRJejakByImageMap" || intent == "chooseFiturOfflineJejakByImageMap"'
+        #     fiturJejak:
+        #         fallback: true
+    # showFitur:
+    #     enter: parseTime
+    #     action:
+    #         -   name: showFiturKoordinat
+    #             condition: "intent == 'chooseFiturKoordinatJejakByImageMap'"
+    #         -   name: showFiturQR
+    #             condition: "intent == 'chooseFiturQRJejakByImageMap'"
+    #         -   name: showFiturOffline
+    #             condition: "intent == 'chooseFiturOfflineJejakByImageMap'"
+    #         -   name: goToConfirm
+    #     end: true
+actions:
+    goToConfirm:
+        type: command
+        options:
+            command: goToConfirm
+    bridgingAboutJejak:
+        type: text
+        options:
+            text: Jaki punya beberapa informasi tentang Jejakin lho, mana yang ingin kamu ketahui lebih lanjut?
+    bridgingFiturJejak:
+        type: text
+        options:
+            text: Jejakin juga dapat memberikan informasi perhitungan Penyerapan Karbon, Keanekaragaman Hayati, Infiltrasi Air, dan Gas Rumah Kaca yang dapat diserap akibat penanaman pohon-pohon tersebut. // Dengan informasi tersebut, kamu bisa mengetahui dampak dari apa yang sudah kamu lakukan untuk bumi ini, dan semoga makin tergerak untuk berbuat lebih banyak lagi. 
+    showFiturKoordinat:
+        type: text
+        options:
+            text: Sistem penandaan dan penyimpanan lokasi area tanam yang sangat fleksibel & tidak terbatas, menyediakan kemudahan pemantauan hari ini dan esok nanti.
+    showFiturQR:
+        type: text
+        options:
+            text: Digunakan untuk memudahkan proses pencatatan Tanaman, saatnya ucapkan selamat tinggal pada tumpukan catatan kertas dan coretan papan tulis yang tidak berujung.
+    showFiturOffline:
+        type: text
+        options:
+            text: Terobosan yang memungkinkan kegiatan pemantauan tanaman dilakukan tanpa Internet. Ketiadaan sinyal & jaringan tak lagi menjadi beban.
+    showLatarBelakang:
+        type: text
+        options:
+            text: Saat ini bumi kita terancam oleh pemanasan global, yuk kita bantu lawan perubahan iklim dengan melakukan penanaman pohon.
+    showDidukungOleh:
+        type: text
+        options:
+            text: 'Aplikasi Jejakin dapat membantu pembuatan program kerja, pemetaan, membuat QR codes otomatis, sensus di lapangan, menampilkan dasbor laporan dan analisa, sampai dengan perhitungan dampak positif terhadap lingkungan akibat penanaman pohon-pohon tersebut. '
+    showTujuan:
+        type: text
+        options:
+            text: Menanam pohon terbukti sebagai cara yang paling mudah dan efektif untuk menahan laju perubahan iklim. // Jejakin adalah sistem pengelolaan pohon yang dapat membantu proses pengambilan dan pengolahan data yang terukur, mudah dilaporkan dan dapat di verifikasi.
+    imageMapFiturJejak:
+        type: template
+        options:
+            type: imagemap
+            #TODO need to adjust the coordinate
+            items:
+                altText: Terdapat tiga fitur yang dimiliki Jejakin, Mana yang ingin kamu ketahui?
+                baseUrl: https://i.ibb.co/fHnNZdM/fitur-jejak.jpg
+                baseSize:
+                    height: 1040
+                    width: 1040
+                actions:
+                    -   text: "Penyimpanan Koordinat"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 0
+                            width: 1040
+                            height: 260
+                    -   text: "Mode Offline"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 346.667
+                            width: 1040
+                            height: 260
+                    -   text: "QR Code"
+                        type: "message"
+                        area:
+                            x: 0
+                            y: 693.334
+                            width: 1040
+                            height: 260
+    # imageMapAboutJejak:
+    #     type: template
+    #     options:
+    #         type: imagemap
+    #         #TODO need to adjust the coordinate
+    #         items:
+    #             altText: Pilih menu yang kamu inginkan
+    #             baseUrl: https://i.ibb.co/4PVv2Nw/44-100.jpg
+    #             baseSize:
+    #                 height: 1040
+    #                 width: 1040
+    #             actions:
+    #                 -   text: "Fakta Saat Ini"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 0
+    #                         width: 1040
+    #                         height: 260
+    #                 -   text: "Apa Itu Jejakin"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 260
+    #                         width: 1040
+    #                         height: 260
+    #                 -   text: "Fitur Aplikasi"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 520
+    #                         width: 1040
+    #                         height: 260
+    #                 -   text: "Hitung Dampak"
+    #                     type: "message"
+    #                     area:
+    #                         x: 0
+    #                         y: 780
+    #                         width: 1040
+    #                         height: 260
+    
+    imageFitur:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/s6RSgq6/Artboard-10-copy-2-100.jpg
+                previewImageUrl: https://i.ibb.co/s6RSgq6/Artboard-10-copy-2-100.jpg
+    imageDampak:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/sQs0Y1T/Artboard-10-copy-3-100.jpg
+                previewImageUrl: https://i.ibb.co/sQs0Y1T/Artboard-10-copy-3-100.jpg
+    imageFakta:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/mSDsYJQ/33-copy-100.jpg
+                previewImageUrl: https://i.ibb.co/mSDsYJQ/33-copy-100.jpg
+    imageTentang:
+        type: template
+        options:
+            type: image
+            items:
+                originalContentUrl: https://i.ibb.co/9gwPVkL/Artboard-10-copy-100.jpg
+                previewImageUrl: https://i.ibb.co/9gwPVkL/Artboard-10-copy-100.jpg
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+methods:
+    parseTime(ctx): "
+        let date = new Date(ctx.context.$now + 300000);
+        let dateISO = date.toISOString();
+        let parsedDate = dateISO.split('T');
+        let parsedTime = parsedDate[1].split('.');
+        ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+        let dateEnd = new Date(ctx.context.$now + 360000);
+        let dateISOEnd = dateEnd.toISOString();
+        let parsedDateEnd = dateISOEnd.split('T');
+        let parsedTimeEnd = parsedDateEnd[1].split('.');
+        ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+        return ctx;
+    "

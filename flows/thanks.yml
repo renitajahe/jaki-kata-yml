@@ -1,0 +1,52 @@
+invalidate: 1520539256476
+volatile: true
+active: true
+intents:
+    # thanksIntent:
+    #     priority: 5
+    #     initial: true
+    #     type: text
+    #     classifier:
+    #         nlu: qisg
+    #         expression: 'statement == ''user_say_thankyou'''
+    goToThanks:
+        initial: true
+        type: command
+        condition: "content == 'goToThanks'"
+    goToThanksByPayload:
+        type: data
+        initial: true
+        condition: "payload.goToThanks"
+    # intentNo:
+    #     initial: true
+    #     type : text
+    #     classifier:
+    #         nlu: yesno
+    #         expression: "yesno == 'no'"
+    #     condition: "context.$lastFlow == 'survey' && context.$lastState == 'showProductRecommendation' || context.$lastState == 'timeout'"
+states:
+    initThanks:
+        initial: true
+        end: true
+        transitions:
+            initThanks:
+                fallback: true
+        action:
+            # - name: removeUserTimeOut2
+            # - name: removeUserTimeOut1
+            - name: sayThanks
+actions:
+    sayThanks:
+        type: text
+        options:
+            text: 'Makasih ya udah mau ngobrol sama Jaki! :D'
+    # removeUserTimeOut1:
+    #     type: schedule
+    #     options:
+    #         id: userTimeOut1
+    #         command: remove
+    # removeUserTimeOut2:
+    #     type: schedule
+    #     options:
+    #         id: userTimeOut2
+    #         command: remove
